@@ -1,0 +1,7 @@
+out/**
+build/**
+install/**
+CMakeSettings.json
+.vs/**
+.vscode/**
+
