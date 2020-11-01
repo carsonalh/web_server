@@ -15,6 +15,28 @@ TEST_CASE("Correctly identifies the scheme of the uri.") {
 
     CHECK(uri.ParseFromString("ftp://www.example.com/foo/bar?query#fragment"));
     CHECK(uri.GetScheme() == "ftp");
+
+    CHECK(uri.ParseFromString("c++://www.example.com/foo/bar?query#fragment"));
+    CHECK(uri.GetScheme() == "c++");
+
+    CHECK(uri.ParseFromString("a.://www.example.com/foo/bar?query#fragment"));
+    CHECK(uri.GetScheme() == "a.");
+}
+
+TEST_CASE("Returns false for a bad scheme.") {
+    Uri::Uri uri;
+
+    const std::vector<std::string> bad_scheme_uris{
+        "://example.com",
+        "0://example.com",
+        "0a://example.com",
+        "++://example.com",
+        "b$://example.com",
+    };
+
+    for (const auto& u : bad_scheme_uris) {
+        CHECK_FALSE(uri.ParseFromString(u));
+    }
 }
 
 TEST_CASE("Correctly identifies the host of the uri.") {
@@ -162,7 +184,13 @@ TEST_CASE("Correctly identifies if has a port or not.") {
     CHECK(uri.ParseFromString("//example.com:8080"));
     CHECK(uri.HasPort());
 
+    CHECK(uri.ParseFromString("https://example.com:8080/this/is/a/path"));
+    CHECK(uri.HasPort());
+
     CHECK(uri.ParseFromString("//google.com"));
+    CHECK_FALSE(uri.HasPort());
+
+    CHECK(uri.ParseFromString("https:this:is:a:uri"));
     CHECK_FALSE(uri.HasPort());
 }
 
@@ -187,6 +215,16 @@ TEST_CASE("Correctly retrieves the port from a uri.") {
 
     CHECK(uri.ParseFromString("//example.com:65535"));
     CHECK(uri.GetPort() == 65535);
+}
+
+TEST_CASE("Correctly retrieves user info from the uri.") {
+    Uri::Uri uri;
+
+    CHECK(uri.ParseFromString("//john.doe:password@example.com:0"));
+    CHECK(uri.GetUserInfo() == "john.doe:password");
+
+    CHECK(uri.ParseFromString("//example_user:example_password@example.com:0"));
+    CHECK(uri.GetUserInfo() == "example_user:example_password");
 }
 
 #include "./catch_main.hpp"

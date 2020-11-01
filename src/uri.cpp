@@ -7,6 +7,7 @@
 
 namespace Uri {
 
+    /** Implementation details of the Uri::Uri class. */
     struct Uri::Impl
     {
         std::string                 scheme;
@@ -19,6 +20,8 @@ namespace Uri {
         uint16_t                    port;
 
     public:
+        /**Clears all the member data of the implementation.
+         */
         void Clear()
         {
             scheme.clear();
@@ -61,8 +64,13 @@ namespace Uri {
             }
         };
 
-        std::regex scheme_pattern{ "^([a-zA-Z][a-zA-Z0-9+\\-.]*):" };
-        m_Impl->scheme = search(scheme_pattern, 1);
+        if (std::regex_search(string, search_results, std::regex("^([a-zA-Z][a-zA-Z0-9+\\-.]*):"))) {
+            m_Impl->scheme = std::move(search_results[1].str());
+            string = std::move(search_results.suffix().str());
+        }
+        else if (std::regex_search(string, std::regex("^.*://"))) {
+            return false;
+        }
 
         {
             std::regex user_info_and_host_pattern{
