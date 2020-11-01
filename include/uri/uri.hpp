@@ -50,6 +50,26 @@ namespace Uri {
          */
         uint16_t GetPort() const;
 
+        /**Returns true for a URI with a relative path (only valid for URIs
+         * which have a path in the first place).
+         */
+        bool ContainsRelativePath() const;
+
+        void SetScheme(const std::string& scheme);
+
+        void SetUserInfo(const std::string& userInfo);
+
+        void SetHost(const std::string& host);
+
+        void SetPath(const std::vector<std::string>& path);
+
+        void SetQuery(const std::string& query);
+
+        void SetFragment(const std::string& fragment);
+
+        void SetHasPort(bool hasPort);
+
+        void SetPort(uint16_t port);
     protected:
         struct Impl;
         std::unique_ptr<Impl> m_Impl;

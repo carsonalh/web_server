@@ -189,4 +189,48 @@ namespace Uri {
         return m_Impl->port;
     }
 
+    bool Uri::ContainsRelativePath() const
+    {
+        return m_Impl->path.size() && !m_Impl->path[0].empty();
+    }
+    void Uri::SetScheme(const std::string& scheme)
+    {
+        m_Impl->scheme = scheme;
+    }
+
+    void Uri::SetUserInfo(const std::string& userInfo)
+    {
+        m_Impl->user_info = userInfo;
+    }
+
+    void Uri::SetHost(const std::string& host)
+    {
+        m_Impl->host = host;
+    }
+
+    void Uri::SetPath(const std::vector<std::string>& path)
+    {
+        m_Impl->path = path;
+    }
+
+    void Uri::SetQuery(const std::string& query)
+    {
+        m_Impl->query = query;
+    }
+
+    void Uri::SetFragment(const std::string& fragment)
+    {
+        m_Impl->fragment = fragment;
+    }
+
+    void Uri::SetHasPort(bool hasPort)
+    {
+        m_Impl->has_port = hasPort;
+    }
+
+    void Uri::SetPort(uint16_t port)
+    {
+        m_Impl->port = port;
+    }
+
 }
