@@ -31,13 +31,12 @@ namespace Uri {
     };
 
     Uri::Uri()
-        : m_Impl(new Impl)
+        : m_Impl{ std::make_unique<Uri::Impl>() }
     {
     }
 
     Uri::~Uri()
     {
-        delete m_Impl;
     }
 
     bool Uri::ParseFromString(std::string string)
@@ -130,12 +129,12 @@ namespace Uri {
         return true;
     }
 
-    std::string Uri::GetScheme() const
+    const std::string& Uri::GetScheme() const
     {
         return m_Impl->scheme;
     }
 
-    std::string Uri::GetHost() const
+    const std::string& Uri::GetHost() const
     {
         return m_Impl->host;
     }
@@ -145,12 +144,12 @@ namespace Uri {
         return m_Impl->path;
     }
 
-    std::string Uri::GetQuery() const
+    const std::string& Uri::GetQuery() const
     {
         return m_Impl->query;
     }
 
-    std::string Uri::GetFragment() const
+    const std::string& Uri::GetFragment() const
     {
         return m_Impl->fragment;
     }
