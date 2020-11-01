@@ -25,33 +25,26 @@ namespace Uri {
          */
         bool ParseFromString(std::string string);
 
-        /**Gets the "scheme" part of the URI. */
         const std::string& GetScheme() const;
 
-        /**Gets the "user info" part of the URI. */
         const std::string& GetUserInfo() const;
 
-        /**Gets the "host" part of the URI. */
         const std::string& GetHost() const;
 
-        /**Gets the path of the URI.
-         * If the start of the path is an empty string (""), that means that
+        /**If the start of the path is an empty string (""), that means that
          * the path is absolute, and the rest of the data in the vector will be
          * the path data.
          */
         const std::vector<std::string>& GetPath() const;
 
-        /**Gets the "query" part of the URI. */
         const std::string& GetQuery() const;
 
-        /**Gets the "fragment" part of the URI. */
         const std::string& GetFragment() const;
 
-        /**Says whether or not the URI supplies a port. */
+        /**Whether or not the URI supplies a port, as this is optional. */
         bool HasPort() const;
 
-        /**Gets the port of the URI.
-         * @note
+        /**@note
          *      The port returned by this method will only be valid if and only
          *      if the HasPort method returns true.
          */
