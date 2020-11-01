@@ -1,5 +1,6 @@
 #include "uri/uri.hpp"
 
+#include <sstream>
 #include <string>
 #include <vector>
 #include <regex>
@@ -193,6 +194,37 @@ namespace Uri {
     {
         return m_Impl->path.size() && !m_Impl->path[0].empty();
     }
+
+    // TODO: this method should be refactored
+    std::string Uri::ConstructString() const
+    {
+        std::ostringstream path{ "" };
+        for (const auto& segment : m_Impl->path) {
+            if (!segment.empty())
+                path << "/" << segment;
+        }
+
+        std::string scheme_part, port_part, query_part, fragment_part;
+
+        if (m_Impl->scheme.size() > 0) {
+            scheme_part = m_Impl->scheme + ':';
+        }
+
+        if (m_Impl->has_port) {
+            port_part = ':' + std::to_string(m_Impl->port);
+        }
+
+        if (m_Impl->query.size() > 0) {
+            query_part = '?' + m_Impl->query;
+        }
+
+        if (m_Impl->fragment.size() > 0) {
+            fragment_part = '#' + m_Impl->fragment;
+        }
+
+        return scheme_part + "//" + m_Impl->host + port_part + path.str() + query_part + fragment_part;
+    }
+
     void Uri::SetScheme(const std::string& scheme)
     {
         m_Impl->scheme = scheme;

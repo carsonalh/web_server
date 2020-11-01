@@ -62,13 +62,16 @@ TEST_CASE("Correctly identifies the path of the uri for absolute path.") {
     Uri::Uri uri;
 
     CHECK(uri.ParseFromString("https://www.example.com/foo/bar?query#fragment"));
-    CHECK(uri.GetPath() == std::vector<std::string>{"", "foo", "bar"});
+    CHECK(uri.GetPath() == std::vector<std::string>{ "", "foo", "bar" });
 
     CHECK(uri.ParseFromString("https://www.example.com/baz/foo?query#fragment"));
-    CHECK(uri.GetPath() == std::vector<std::string>{"", "baz", "foo"});
+    CHECK(uri.GetPath() == std::vector<std::string>{ "", "baz", "foo" });
 
     CHECK(uri.ParseFromString("ftp:/"));
-    CHECK(uri.GetPath() == std::vector<std::string>{""});
+    CHECK(uri.GetPath() == std::vector<std::string>{ "" });
+
+    CHECK(uri.ParseFromString("https://www.example.com//"));
+    CHECK(uri.GetPath() == std::vector<std::string>{ "", "" });
 }
 
 TEST_CASE("Correctly identifies the path of the uri with a trailing slash.") {
@@ -140,6 +143,10 @@ TEST_CASE("Identifies relative path.") {
     CHECK(uri.ParseFromString("this/is/relative/"));
     CHECK(uri.GetHost() == "");
     CHECK(uri.GetPath() == std::vector<std::string>{ "this", "is", "relative" });
+
+    CHECK(uri.ParseFromString("../../g"));
+    CHECK(uri.GetHost() == "");
+    CHECK(uri.GetPath() == std::vector<std::string>{ "..", "..", "g" });
 }
 
 TEST_CASE("Identifies absolute path correctly.") {
@@ -225,6 +232,97 @@ TEST_CASE("Correctly retrieves user info from the uri.") {
 
     CHECK(uri.ParseFromString("//example_user:example_password@example.com:0"));
     CHECK(uri.GetUserInfo() == "example_user:example_password");
+}
+
+TEST_CASE("Correctly identifies whether or not a uri is relative.") {
+    Uri::Uri uri;
+
+    CHECK(uri.ParseFromString("foo/bar"));
+    CHECK(uri.ContainsRelativePath());
+
+    CHECK(uri.ParseFromString("/not/relative"));
+    CHECK_FALSE(uri.ContainsRelativePath());
+
+    CHECK(uri.ParseFromString("../relative"));
+    CHECK(uri.ContainsRelativePath());
+
+    CHECK(uri.ParseFromString("..//relative"));
+    CHECK(uri.ContainsRelativePath());
+}
+
+TEST_CASE("Correctly constructs a URI with a scheme and host") {
+    Uri::Uri uri;
+
+    uri.SetScheme("http");
+    uri.SetHost("example.com");
+
+    CHECK(uri.ConstructString() == "http://example.com");
+
+    uri.SetScheme("https");
+    CHECK(uri.ConstructString() == "https://example.com");
+}
+
+TEST_CASE("Correctly constructs a URI with scheme, host, and path") {
+    Uri::Uri uri;
+
+    uri.SetScheme("http");
+    uri.SetHost("example.com");
+    uri.SetPath({
+        "",
+        "foo",
+        "bar",
+        });
+
+    CHECK(uri.ConstructString() == "http://example.com/foo/bar");
+    
+    auto path = uri.GetPath();
+    path.push_back("baz");
+    uri.SetPath(path);
+
+    CHECK(uri.ConstructString() == "http://example.com/foo/bar/baz");
+}
+
+TEST_CASE("Constructs a URI with a host and no scheme") {
+    Uri::Uri uri;
+
+    uri.SetHost("example.com");
+
+    CHECK(uri.ConstructString() == "//example.com");
+}
+
+TEST_CASE("Constructs a URI with a port.") {
+    Uri::Uri uri;
+
+    uri.SetScheme("http");
+    uri.SetHost("www.example.com");
+    uri.SetHasPort(true);
+    uri.SetPort(8080);
+
+    CHECK(uri.ConstructString() == "http://www.example.com:8080");
+}
+
+TEST_CASE("Constructs a URI with a query.") {
+    Uri::Uri uri;
+
+    uri.SetScheme("http");
+    uri.SetHost("www.example.com");
+    uri.SetHasPort(true);
+    uri.SetPort(8080);
+    uri.SetQuery("main_query");
+
+    CHECK(uri.ConstructString() == "http://www.example.com:8080?main_query");
+}
+
+TEST_CASE("Constructs a URI with a fragment.") {
+    Uri::Uri uri;
+
+    uri.SetScheme("http");
+    uri.SetHost("www.example.com");
+    uri.SetHasPort(true);
+    uri.SetPort(8080);
+    uri.SetFragment("my-fragment");
+
+    CHECK(uri.ConstructString() == "http://www.example.com:8080#my-fragment");
 }
 
 #include "./catch_main.hpp"

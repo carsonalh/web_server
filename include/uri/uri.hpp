@@ -16,10 +16,8 @@ namespace Uri {
         ~Uri();
 
         /**Parses the URI object from a URI string.
-         * 
          * @param[in]
          *      The string to parse.
-         *
          * @returns
          *      True if the URI was valid and false otherwise.
          */
@@ -55,6 +53,8 @@ namespace Uri {
          */
         bool ContainsRelativePath() const;
 
+        std::string ConstructString() const;
+
         void SetScheme(const std::string& scheme);
 
         void SetUserInfo(const std::string& userInfo);
@@ -70,6 +70,7 @@ namespace Uri {
         void SetHasPort(bool hasPort);
 
         void SetPort(uint16_t port);
+
     protected:
         struct Impl;
         std::unique_ptr<Impl> m_Impl;
