@@ -10,6 +10,7 @@ namespace Uri {
     struct Uri::Impl
     {
         std::string                 scheme;
+        std::string                 user_info;
         std::string                 host;
         std::vector<std::string>    path;
         std::string                 query;
@@ -21,6 +22,7 @@ namespace Uri {
         void Clear()
         {
             scheme.clear();
+            user_info.clear();
             host.clear();
             path.clear();
             query.clear();
@@ -62,8 +64,18 @@ namespace Uri {
         std::regex scheme_pattern{ "^([a-zA-Z][a-zA-Z0-9+\\-.]*):" };
         m_Impl->scheme = search(scheme_pattern, 1);
 
-        std::regex host_pattern{ "^//(([a-zA-Z0-9\\-._~]|%[a-fA-F0-9]{2}|[!$&'()*+,;=])+)" };
-        m_Impl->host = search(host_pattern, 1);
+        {
+            std::regex user_info_and_host_pattern{
+                "^:?//((([a-zA-Z0-9\\-._~:!$&'\\(\\)*+,;=]|%[0-9a-fA-F]{2})*)@)?"
+                "(([a-zA-Z0-9\\-._~]|%[a-fA-F0-9]{2}|[!$&'()*+,;=])+)"
+            };
+
+            if (std::regex_search(string, search_results, user_info_and_host_pattern)) {
+                m_Impl->user_info = std::move(search_results[2].str());
+                m_Impl->host = std::move(search_results[4].str());
+                string = std::move(search_results.suffix().str());
+            }
+        }
 
         std::regex port_pattern{ "^:([0-9]{0,5})" };
 
@@ -132,6 +144,11 @@ namespace Uri {
     const std::string& Uri::GetScheme() const
     {
         return m_Impl->scheme;
+    }
+
+    const std::string& Uri::GetUserInfo() const
+    {
+        return m_Impl->user_info;
     }
 
     const std::string& Uri::GetHost() const
