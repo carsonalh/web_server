@@ -190,6 +190,24 @@ TEST_CASE("Correctly identifies IPv4 addresses.") {
     CHECK_FALSE(Uri::isIpv4String("255.255.255.256"));
     CHECK_FALSE(Uri::isIpv4String("255.255.255.2000"));
 }
+
+TEST_CASE("Correctly identifies IPv6 addresses.") {
+    using Uri = Uri::Uri;
+    CHECK(Uri::isIpv6String("::1"));
+    CHECK(Uri::isIpv6String("::ffff:1"));
+
+    CHECK_FALSE(Uri::isIpv6String("::1efg"));
+    CHECK_FALSE(Uri::isIpv6String(""));
+
+    CHECK(Uri::isIpv6String("::FFFF:1"));
+    CHECK(Uri::isIpv6String("::aaaa:AAAA:abab:f099"));
+    CHECK(Uri::isIpv6String("2001:0db8:85a3:0000:0000:8a2e:0370:7334"));
+    CHECK(Uri::isIpv6String("2001:0db8:85a3::8a2e:0370:7334"));
+
+    CHECK_FALSE(Uri::isIpv6String("2001:0db8:85a3:0000:0000:8a2e:0370:7334:1234"));
+    CHECK_FALSE(Uri::isIpv6String("2001accf:0db8:85a3::8a2e:0370:7334"));
+    CHECK_FALSE(Uri::isIpv6String(":::0"));
+    CHECK_FALSE(Uri::isIpv6String("1::1::1"));
 }
 
 TEST_CASE("Correctly parses a uri that has an IPv4 address as a host.") {

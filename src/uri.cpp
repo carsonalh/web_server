@@ -1,5 +1,6 @@
 #include "uri/uri.hpp"
 
+#include <numeric>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -67,6 +68,82 @@ namespace Uri {
             initialized
             && !(currentNumber & ~0x00ff)
             );
+    }
+
+    bool Uri::isIpv6String(const std::string& string)
+    {
+        if (string.empty())
+            return false;
+
+        int numSegments;
+
+        {
+            numSegments = 1;
+
+            int numSingleColons = 0;
+            int numDoubleColons = 0;
+
+            int currentColonRun = 0, currentHexRun = 0;
+            for (int i = 0; i < string.size(); ++i) {
+                if (string[i] == ':') {
+                    currentHexRun = 0;
+                    if (currentColonRun >= 2) {
+                        return false;
+                    }
+                    else if (currentColonRun == 1) {
+                        if (numDoubleColons > 0) {
+                            return false;
+                        }
+
+                        ++currentColonRun;
+                        ++numDoubleColons;
+                        ++numSegments;
+                    }
+                    else {
+                        ++currentColonRun;
+                    }
+                }
+                else {
+                    auto c = string[i];
+                    if (
+                        ('0' <= c && c <= '9')
+                        || ('a' <= c && c <= 'f')
+                        || ('A' <= c && c <= 'F')
+                        ) {
+                        if (currentColonRun > 0) {
+                            ++numSingleColons;
+                            ++numSegments;
+                            currentColonRun = 0;
+                        }
+
+                        const size_t maxNumHexAllowedIpv6 = 4;
+                        ++currentHexRun;
+                        if (currentHexRun > maxNumHexAllowedIpv6) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        for (int i = 0; i < string.size(); ++i) {
+            char c = string[i];
+            if (
+                !('0' <= c && c <= '9')
+                && !('a' <= c && c <= 'f')
+                && !('A' <= c && c <= 'F')
+                && !(c == ':')
+                )
+                return false;
+        }
+
+        // The greatest allowed amount of segments in an ipv6 address
+        const size_t maxSegments = 8;
+
+        if (numSegments > maxSegments)
+            return false;
+
+        return true;
     }
 
     Uri::Uri()
