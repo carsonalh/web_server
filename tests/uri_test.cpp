@@ -191,6 +191,19 @@ TEST_CASE("Correctly identifies IPv4 addresses.") {
     CHECK_FALSE(Uri::isIpv4String("255.255.255.2000"));
 }
 
+TEST_CASE("Correctly parses a uri that has an IPv4 address as a host.") {
+    Uri::Uri uri;
+
+    CHECK(uri.parseFromString("//127.0.0.1/"));
+    CHECK(uri.host() == "127.0.0.1");
+
+    CHECK(uri.parseFromString("//255.255.255.255"));
+    CHECK(uri.host() == "255.255.255.255");
+
+    CHECK(uri.parseFromString("//0.0.0.0"));
+    CHECK(uri.host() == "0.0.0.0");
+}
+
 TEST_CASE("Correctly identifies IPv6 addresses.") {
     using Uri = Uri::Uri;
     CHECK(Uri::isIpv6String("::1"));
@@ -210,17 +223,48 @@ TEST_CASE("Correctly identifies IPv6 addresses.") {
     CHECK_FALSE(Uri::isIpv6String("1::1::1"));
 }
 
-TEST_CASE("Correctly parses a uri that has an IPv4 address as a host.") {
+TEST_CASE("Parses a uri with a ipv6 address as a host.") {
     Uri::Uri uri;
 
-    CHECK(uri.parseFromString("//127.0.0.1/"));
-    CHECK(uri.host() == "127.0.0.1");
+    struct TestVector
+    {
+        std::string uri;
+        std::string host;
+    };
 
-    CHECK(uri.parseFromString("//255.255.255.255"));
-    CHECK(uri.host() == "255.255.255.255");
+    const std::vector<TestVector> cases{
+        {"https://[::1]", "::1"},
+        {"https://[2001:0db8:85a3:0000:0000:8a2e:0370:7334]", "2001:0db8:85a3:0000:0000:8a2e:0370:7334"},
+        {"https://[2001:0db8:85a3::8a2e:0370:7334]", "2001:0db8:85a3::8a2e:0370:7334"},
+        {"https://[::ffff:192.0.2.128]", "::ffff:192.0.2.128"},
+    };
 
-    CHECK(uri.parseFromString("//0.0.0.0"));
-    CHECK(uri.host() == "0.0.0.0");
+    int i = 0;
+    for (auto& c : cases) {
+        INFO("Index is " << i++);
+        CHECK(uri.parseFromString(c.uri));
+        CHECK(uri.host() == c.host);
+    }
+}
+
+TEST_CASE("Identifies other URI elements with ipv6 as a host.") {
+    Uri::Uri uri;
+
+    CHECK(uri.parseFromString("//[::1]/this/is/a/path"));
+    CHECK(uri.path() == std::vector<std::string>{ "", "this", "is", "a", "path" });
+
+    CHECK(uri.parseFromString("//[::1]:8080"));
+    CHECK(uri.port() == 8080);
+
+    CHECK(uri.parseFromString("//[::7070]#with-ipv6"));
+    CHECK(uri.fragment() == "with-ipv6");
+}
+
+TEST_CASE("Parses a uri with a bad ipv6 address.") {
+    Uri::Uri uri;
+    CHECK_FALSE(uri.parseFromString("//[]"));
+    CHECK_FALSE(uri.parseFromString("//[::fffg]"));
+    CHECK_FALSE(uri.parseFromString("//[::1:0.0.0.256]"));
 }
 
 TEST_CASE("Correctly identifies if has a port or not.") {
