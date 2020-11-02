@@ -409,5 +409,46 @@ TEST_CASE("Constructs a URI with a fragment.") {
     CHECK(uri.constructString() == "http://www.example.com:8080#my-fragment");
 }
 
+TEST_CASE("Can construct URI-s with query question mark with an empty query.") {
+    Uri::Uri uri;
+
+    uri.setQuery("");
+    uri.setHost("example.com");
+
+    CHECK(uri.constructString() == "//example.com?");
+
+    uri.clearQuery();
+    uri.setHost("example.com");
+
+    CHECK(uri.constructString() == "//example.com");
+}
+
+TEST_CASE("Can construct URI-s with fragment pound sign with an empty fragment.") {
+    Uri::Uri uri;
+
+    uri.setFragment("");
+    uri.setHost("example.com");
+
+    CHECK(uri.constructString() == "//example.com#");
+
+    uri.clearFragment();
+    uri.setHost("example.com");
+
+    CHECK(uri.constructString() == "//example.com");
+}
+
+TEST_CASE("Works for compound examples.") {
+    Uri::Uri uri;
+
+    uri.setQuery("");
+    uri.setFragment("");
+    uri.setHost("www.example.com");
+
+    CHECK(uri.constructString() == "//www.example.com?#");
+
+    uri.setScheme("https");
+    CHECK(uri.constructString() == "https://www.example.com?#");
+}
+
 #include "./catch_main.hpp"
 

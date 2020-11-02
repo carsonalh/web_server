@@ -86,9 +86,17 @@ namespace Uri {
 
         void setPath(const std::vector<std::string>& path);
 
+        /** Sets the query as active, and gives it the passed value. */
         void setQuery(const std::string& query);
 
+        /** Sets the query as inactive. */
+        void clearQuery();
+
+        /** Sets the fragment as active, and gives it the passed value. */
         void setFragment(const std::string& fragment);
+
+        /** Sets the fragment as inactive. */
+        void clearFragment();
 
         void setHasPort(bool hasPort);
 

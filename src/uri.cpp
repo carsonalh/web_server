@@ -50,9 +50,11 @@ namespace Uri {
         std::string                 host;
         std::vector<std::string>    path;
         std::string                 query;
+        bool                        hasQuery = false;
         std::string                 fragment;
-        bool                        hasPort = false;
+        bool                        hasFragment = false;
         uint16_t                    port = 0;
+        bool                        hasPort = false;
 
     public:
         /** Clears all the member data of the implementation. */
@@ -412,11 +414,11 @@ namespace Uri {
             portPart = ':' + std::to_string(m_Impl->port);
         }
 
-        if (m_Impl->query.size() > 0) {
+        if (m_Impl->hasQuery) {
             queryPart = '?' + m_Impl->query;
         }
 
-        if (m_Impl->fragment.size() > 0) {
+        if (m_Impl->hasFragment) {
             fragmentPart = '#' + m_Impl->fragment;
         }
 
@@ -446,11 +448,23 @@ namespace Uri {
     void Uri::setQuery(const std::string& query)
     {
         m_Impl->query = query;
+        m_Impl->hasQuery = true;
+    }
+
+    void Uri::clearQuery()
+    {
+        m_Impl->hasQuery = false;
     }
 
     void Uri::setFragment(const std::string& fragment)
     {
         m_Impl->fragment = fragment;
+        m_Impl->hasFragment = true;
+    }
+
+    void Uri::clearFragment()
+    {
+        m_Impl->hasFragment = false;
     }
 
     void Uri::setHasPort(bool hasPort)
