@@ -437,7 +437,7 @@ TEST_CASE("Can construct URI-s with fragment pound sign with an empty fragment."
     CHECK(uri.constructString() == "//example.com");
 }
 
-TEST_CASE("Works for compound examples.") {
+TEST_CASE("Compound examples with empty queries and fragments are parsed correctly.") {
     Uri::Uri uri;
 
     uri.setQuery("");
@@ -448,6 +448,38 @@ TEST_CASE("Works for compound examples.") {
 
     uri.setScheme("https");
     CHECK(uri.constructString() == "https://www.example.com?#");
+}
+
+TEST_CASE("Paths with trailing empty strings will have a trailing slash in the constructed uri string.") {
+    Uri::Uri uri;
+
+    uri.setHost("google.com");
+    uri.setPath({
+        ""
+        });
+
+    CHECK(uri.constructString() == "//google.com/");
+
+    uri.setPath({ "", "foo", "bar" });
+    CHECK(uri.constructString() == "//google.com/foo/bar");
+
+    uri.setPath({ "", "foo", "bar", "" });
+    CHECK(uri.constructString() == "//google.com/foo/bar/");
+
+    uri.setPath({ "", "a", "" });
+    CHECK(uri.constructString() == "//google.com/a/");
+}
+
+TEST_CASE("Relative paths are treated as absolute when constructing a string with no other information.") {
+    Uri::Uri uri;
+
+    uri.setHost("example.com");
+    uri.setPath({ "a", "relative", "path" });
+    CHECK(uri.constructString() == "//example.com/a/relative/path");
+
+    uri.setHost("example.com");
+    uri.setPath({ "a", "relative", "path", "" });
+    CHECK(uri.constructString() == "//example.com/a/relative/path/");
 }
 
 #include "./catch_main.hpp"

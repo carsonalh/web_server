@@ -398,31 +398,41 @@ namespace Uri {
     // TODO: this method should be refactored
     std::string Uri::constructString() const
     {
-        std::ostringstream path{ "" };
-        for (const auto& segment : m_Impl->path) {
-            if (!segment.empty())
-                path << "/" << segment;
-        }
+        std::ostringstream outString, pathString;
 
-        std::string schemePart, portPart, queryPart, fragmentPart;
+        if (m_Impl->path.size() == 1 && m_Impl->path[0].empty()) {
+            pathString << '/';
+        }
+        else {
+            unsigned index = 0;
+            for (const auto& segment : m_Impl->path) {
+                if (!segment.empty() || index != 0)
+                    pathString << '/' << segment;
+                ++index;
+            }
+        }
 
         if (m_Impl->scheme.size() > 0) {
-            schemePart = m_Impl->scheme + ':';
+            outString << m_Impl->scheme << ':';
         }
+
+        outString << "//" << m_Impl->host;
 
         if (m_Impl->hasPort) {
-            portPart = ':' + std::to_string(m_Impl->port);
+            outString << ':' << std::to_string(m_Impl->port);
         }
 
+        outString << pathString.str();
+
         if (m_Impl->hasQuery) {
-            queryPart = '?' + m_Impl->query;
+            outString << '?' + m_Impl->query;
         }
 
         if (m_Impl->hasFragment) {
-            fragmentPart = '#' + m_Impl->fragment;
+            outString << '#' + m_Impl->fragment;
         }
 
-        return schemePart + "//" + m_Impl->host + portPart + path.str() + queryPart + fragmentPart;
+        return outString.str();
     }
 
     void Uri::setScheme(const std::string& scheme)
