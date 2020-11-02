@@ -185,6 +185,26 @@ TEST_CASE("Returns false for empty string.") {
     CHECK(uri.GetPath() == std::vector<std::string>{ });
 }
 
+TEST_CASE("Correctly identifies IPv4 addresses.") {
+    CHECK(Uri::Uri::IsIpv4String("0.0.0.0"));
+    CHECK(Uri::Uri::IsIpv4String("255.255.255.0"));
+    CHECK_FALSE(Uri::Uri::IsIpv4String("255.255.255.256"));
+    CHECK_FALSE(Uri::Uri::IsIpv4String("255.255.255.2000"));
+}
+
+TEST_CASE("Correctly parses a uri that has an IPv4 address as a host.") {
+    Uri::Uri uri;
+
+    CHECK(uri.ParseFromString("//127.0.0.1/"));
+    CHECK(uri.GetHost() == "127.0.0.1");
+
+    CHECK(uri.ParseFromString("//255.255.255.255"));
+    CHECK(uri.GetHost() == "255.255.255.255");
+
+    CHECK(uri.ParseFromString("//0.0.0.0"));
+    CHECK(uri.GetHost() == "0.0.0.0");
+}
+
 TEST_CASE("Correctly identifies if has a port or not.") {
     Uri::Uri uri;
 

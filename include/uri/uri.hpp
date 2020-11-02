@@ -12,6 +12,14 @@ namespace Uri {
     class Uri
     {
     public:
+        /**Checks if the given string is an IPv4 string or not.
+         * @returns
+         *      True if the string matches the ipv4 format, and all the given
+         *      numbers are in range. False otherwise.
+         */
+        static bool IsIpv4String(const std::string& string);
+
+    public:
         Uri();
         ~Uri();
 

@@ -36,6 +36,40 @@ namespace Uri {
         }
     };
 
+    bool Uri::IsIpv4String(const std::string& string)
+    {
+        if (string.empty())
+            return false;
+
+        bool initialized = false;
+        uint16_t currentNumber = 0;
+        for (int i = 0; i < string.size(); ++i) {
+            if (string[i] == '.') {
+                if (!initialized || (currentNumber & ~0x00ff)) {
+                    return false;
+                }
+                else {
+                    initialized = false;
+                    currentNumber = 0;
+                    continue;
+                }
+            }
+            else if ('0' <= string[i] && string[i] <= '9') {
+                initialized = true;
+                currentNumber *= 10;
+                currentNumber += string[i] - '0';
+            }
+            else {
+                return false;
+            }
+        }
+
+        return (
+            initialized
+            && !(currentNumber & ~0x00ff)
+            );
+    }
+
     Uri::Uri()
         : m_Impl{ std::make_unique<Uri::Impl>() }
     {
