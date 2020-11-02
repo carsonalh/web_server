@@ -81,6 +81,10 @@ namespace Uri {
 
     bool Uri::ParseFromString(std::string string)
     {
+        if (string.empty()) {
+            return false;
+        }
+
         std::smatch search_results;
 
         m_Impl->Clear();

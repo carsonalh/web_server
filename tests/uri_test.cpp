@@ -180,9 +180,7 @@ TEST_CASE("Identifies empty path correctly.") {
 TEST_CASE("Returns false for empty string.") {
     Uri::Uri uri;
 
-    CHECK(uri.ParseFromString("//example.com"));
-    CHECK(uri.GetHost() == "example.com");
-    CHECK(uri.GetPath() == std::vector<std::string>{ });
+    CHECK_FALSE(uri.ParseFromString(""));
 }
 
 TEST_CASE("Correctly identifies IPv4 addresses.") {
