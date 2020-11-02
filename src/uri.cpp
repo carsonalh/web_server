@@ -21,8 +21,7 @@ namespace Uri {
         uint16_t                    port;
 
     public:
-        /**Clears all the member data of the implementation.
-         */
+        /** Clears all the member data of the implementation.  */
         void Clear()
         {
             scheme.clear();
@@ -36,7 +35,7 @@ namespace Uri {
         }
     };
 
-    bool Uri::IsIpv4String(const std::string& string)
+    bool Uri::isIpv4String(const std::string& string)
     {
         if (string.empty())
             return false;
@@ -79,7 +78,7 @@ namespace Uri {
     {
     }
 
-    bool Uri::ParseFromString(std::string string)
+    bool Uri::parseFromString(std::string string)
     {
         if (string.empty()) {
             return false;
@@ -188,53 +187,53 @@ namespace Uri {
         return true;
     }
 
-    const std::string& Uri::GetScheme() const
+    const std::string& Uri::scheme() const
     {
         return m_Impl->scheme;
     }
 
-    const std::string& Uri::GetUserInfo() const
+    const std::string& Uri::userInfo() const
     {
         return m_Impl->user_info;
     }
 
-    const std::string& Uri::GetHost() const
+    const std::string& Uri::host() const
     {
         return m_Impl->host;
     }
 
-    const std::vector<std::string>& Uri::GetPath() const
+    const std::vector<std::string>& Uri::path() const
     {
         return m_Impl->path;
     }
 
-    const std::string& Uri::GetQuery() const
+    const std::string& Uri::query() const
     {
         return m_Impl->query;
     }
 
-    const std::string& Uri::GetFragment() const
+    const std::string& Uri::fragment() const
     {
         return m_Impl->fragment;
     }
 
-    bool Uri::HasPort() const
+    bool Uri::hasPort() const
     {
         return m_Impl->has_port;
     }
 
-    uint16_t Uri::GetPort() const
+    uint16_t Uri::port() const
     {
         return m_Impl->port;
     }
 
-    bool Uri::ContainsRelativePath() const
+    bool Uri::containsRelativePath() const
     {
         return m_Impl->path.size() && !m_Impl->path[0].empty();
     }
 
     // TODO: this method should be refactored
-    std::string Uri::ConstructString() const
+    std::string Uri::constructString() const
     {
         std::ostringstream path{ "" };
         for (const auto& segment : m_Impl->path) {
@@ -263,42 +262,42 @@ namespace Uri {
         return scheme_part + "//" + m_Impl->host + port_part + path.str() + query_part + fragment_part;
     }
 
-    void Uri::SetScheme(const std::string& scheme)
+    void Uri::setScheme(const std::string& scheme)
     {
         m_Impl->scheme = scheme;
     }
 
-    void Uri::SetUserInfo(const std::string& userInfo)
+    void Uri::setUserInfo(const std::string& userInfo)
     {
         m_Impl->user_info = userInfo;
     }
 
-    void Uri::SetHost(const std::string& host)
+    void Uri::setHost(const std::string& host)
     {
         m_Impl->host = host;
     }
 
-    void Uri::SetPath(const std::vector<std::string>& path)
+    void Uri::setPath(const std::vector<std::string>& path)
     {
         m_Impl->path = path;
     }
 
-    void Uri::SetQuery(const std::string& query)
+    void Uri::setQuery(const std::string& query)
     {
         m_Impl->query = query;
     }
 
-    void Uri::SetFragment(const std::string& fragment)
+    void Uri::setFragment(const std::string& fragment)
     {
         m_Impl->fragment = fragment;
     }
 
-    void Uri::SetHasPort(bool hasPort)
+    void Uri::setHasPort(bool hasPort)
     {
         m_Impl->has_port = hasPort;
     }
 
-    void Uri::SetPort(uint16_t port)
+    void Uri::setPort(uint16_t port)
     {
         m_Impl->port = port;
     }
