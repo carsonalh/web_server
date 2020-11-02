@@ -78,7 +78,9 @@ TEST_CASE("Correctly identifies the path of the uri with a trailing slash.") {
     Uri::Uri uri;
 
     CHECK(uri.parseFromString("https://www.example.com/foo/bar/?query#fragment"));
-    CHECK(uri.path() == std::vector<std::string>{"", "foo", "bar"});
+    CHECK(uri.path() == std::vector<std::string>{ "", "foo", "bar", "" });
+    CHECK(uri.parseFromString("https://www.example.com/src/images/"));
+    CHECK(uri.path() == std::vector<std::string>{ "", "src", "images", "" });
 }
 
 TEST_CASE("Gives empty path when no \"path\" is given at all.") {
@@ -142,7 +144,7 @@ TEST_CASE("Identifies relative path.") {
 
     CHECK(uri.parseFromString("this/is/relative/"));
     CHECK(uri.host() == "");
-    CHECK(uri.path() == std::vector<std::string>{ "this", "is", "relative" });
+    CHECK(uri.path() == std::vector<std::string>{ "this", "is", "relative", "" });
 
     CHECK(uri.parseFromString("../../g"));
     CHECK(uri.host() == "");
@@ -158,7 +160,7 @@ TEST_CASE("Identifies absolute path correctly.") {
 
     CHECK(uri.parseFromString("/this/is/absolute/"));
     CHECK(uri.host() == "");
-    CHECK(uri.path() == std::vector<std::string>{ "", "this", "is", "absolute" });
+    CHECK(uri.path() == std::vector<std::string>{ "", "this", "is", "absolute", "" });
 
     CHECK(uri.parseFromString("http:/this/is/absolute"));
     CHECK(uri.host() == "");
@@ -166,7 +168,7 @@ TEST_CASE("Identifies absolute path correctly.") {
 
     CHECK(uri.parseFromString("http:/this/is/absolute/"));
     CHECK(uri.host() == "");
-    CHECK(uri.path() == std::vector<std::string>{ "", "this", "is", "absolute" });
+    CHECK(uri.path() == std::vector<std::string>{ "", "this", "is", "absolute", "" });
 }
 
 TEST_CASE("Identifies empty path correctly.") {

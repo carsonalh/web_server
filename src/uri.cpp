@@ -325,6 +325,10 @@ namespace Uri {
 
                     i = end;
                 }
+
+                if (result[result.size() - 1] == '/' && !m_Impl->path[m_Impl->path.size() - 1].empty()) {
+                    m_Impl->path.push_back("");
+                }
             }
         }
 
