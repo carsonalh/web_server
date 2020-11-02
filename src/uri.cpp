@@ -229,7 +229,7 @@ namespace Uri {
             if (found) {
                 auto& result = searchResults[resultIndex].str();
                 string = searchResults.suffix().str();
-                return std::move(result);
+                return result;
             }
             else {
                 return "";
@@ -237,8 +237,8 @@ namespace Uri {
         };
 
         if (std::regex_search(string, searchResults, std::regex("^([a-zA-Z][a-zA-Z0-9+\\-.]*):"))) {
-            m_Impl->scheme = std::move(searchResults[1].str());
-            string = std::move(searchResults.suffix().str());
+            m_Impl->scheme = searchResults[1].str();
+            string = searchResults.suffix().str();
         }
         else if (std::regex_search(string, std::regex("^.*://"))) {
             return false;
@@ -251,9 +251,9 @@ namespace Uri {
             };
 
             if (std::regex_search(string, searchResults, userInfoAndHostPattern)) {
-                m_Impl->userInfo = std::move(searchResults[2].str());
-                m_Impl->host = std::move(searchResults[4].str());
-                string = std::move(searchResults.suffix().str());
+                m_Impl->userInfo = searchResults[2].str();
+                m_Impl->host = searchResults[4].str();
+                string = searchResults.suffix().str();
             }
 
             //ipv6 support
@@ -272,7 +272,7 @@ namespace Uri {
                         return false;
                     }
 
-                    string = std::move(searchResults.suffix().str());
+                    string = searchResults.suffix().str();
                 }
                 else if (std::regex_search(string, badIpv6HostPattern)) {
                     return false;
@@ -321,7 +321,7 @@ namespace Uri {
                         ++end;
                     }
 
-                    m_Impl->path.push_back(std::move(result.substr(i, end - i)));
+                    m_Impl->path.push_back(result.substr(i, end - i));
 
                     i = end;
                 }
