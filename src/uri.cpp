@@ -66,6 +66,8 @@ namespace Uri {
             path.clear();
             query.clear();
             fragment.clear();
+            hasQuery = false;
+            hasFragment = false;
             hasPort = false;
             port = 0;
         }
