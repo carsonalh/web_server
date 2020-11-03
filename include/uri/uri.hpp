@@ -42,6 +42,11 @@ namespace Uri {
          */
         static std::string percentEncode(std::string_view string);
 
+        /**
+         * Decodes a percent-encoded string, and returns the decoded value.
+         */
+        static std::string percentDecode(std::string_view string);
+
     public:
         Uri();
         ~Uri();

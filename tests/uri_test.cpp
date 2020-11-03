@@ -579,5 +579,24 @@ TEST_CASE("Percent encode correctly encodes reserved characters.") {
     CHECK(Uri::Uri::percentEncode("  ") == "%20%20");
 }
 
+TEST_CASE("Percent decode correctly decodes an empty string.") {
+    CHECK(Uri::Uri::percentDecode("") == "");
+}
+
+TEST_CASE("Percent decode does not modify unreserved characters") {
+    CHECK(Uri::Uri::percentDecode("foo") == "foo");
+    CHECK(Uri::Uri::percentDecode("test") == "test");
+    CHECK(Uri::Uri::percentDecode("-") == "-");
+}
+
+TEST_CASE("Percent decode correctly decodes reserved characters.") {
+    CHECK(Uri::Uri::percentDecode("%20") == " ");
+    CHECK(Uri::Uri::percentDecode("%40") == "@");
+    CHECK(Uri::Uri::percentDecode("%2B") == "+");
+    CHECK(Uri::Uri::percentDecode("%2b") == "+");
+    CHECK(Uri::Uri::percentDecode("%2A") == "*");
+    CHECK(Uri::Uri::percentDecode("%2a") == "*");
+}
+
 #include "./catch_main.hpp"
 

@@ -226,6 +226,29 @@ namespace Uri {
         return out.str();
     }
 
+    std::string Uri::percentDecode(std::string_view string)
+    {
+        std::ostringstream out;
+
+        for (int i = 0; i < string.size(); ++i) {
+            char c = string[i];
+
+            if (c == '%') {
+                static char buffer[3] = { 0 };
+                int decoded;
+                std::memcpy(buffer, string.data() + i + 1, sizeof buffer - sizeof buffer[0]);
+                std::sscanf(buffer, "%2X", &decoded);
+                out << (char)decoded;
+                i += 2; // Advance i past the two characters that were just read
+            }
+            else {
+                out << c;
+            }
+        }
+
+        return out.str();
+    }
+
     Uri::Uri()
         : m_Impl{ std::make_unique<Uri::Impl>() }
     {
