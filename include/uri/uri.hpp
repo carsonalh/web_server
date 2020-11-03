@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <string_view>
+#include <unordered_set>
 #include <vector>
 #include <memory>
 
@@ -29,6 +31,16 @@ namespace Uri {
          *      numbers are in range. False otherwise.
          */
         static bool isIpv6String(const std::string& string);
+
+        /**
+         * Gets a string that is not percent encoded, and replaces all the
+         * non-unreserved characters with their percent-encoded counterparts.
+         * If the string is already percent encoded, this function will not
+         * detect this, and will instead percent-encoded the parts that have
+         * already been encoded, so it is up to the user of this function to
+         * manage what has and has not already been encoded.
+         */
+        static std::string percentEncode(std::string_view string);
 
     public:
         Uri();
@@ -121,6 +133,28 @@ namespace Uri {
         std::unique_ptr<Impl> m_Impl;
 
     };
+
+    /**
+     * Represents a set of characters which is intended to be used primarily
+     * for URIs to match the specification, but can also be used for other
+     * purposes.
+     */
+    class CharacterSet
+    {
+    public:
+        CharacterSet(std::initializer_list<char> init);
+
+        /**
+         * Tells whether or not the set contains the given character.
+         */
+        bool contains(char c) const;
+
+    protected:
+        const std::unordered_set<char> m_Characters;
+
+    };
+
+    extern const CharacterSet UNRESERVED_CHARACTERS;
 
 }
 

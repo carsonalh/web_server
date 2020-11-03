@@ -3,6 +3,7 @@
 #include <cctype>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <regex>
 #include <memory>
@@ -207,6 +208,24 @@ namespace Uri {
         return true;
     }
 
+    std::string Uri::percentEncode(std::string_view string)
+    {
+        std::ostringstream out;
+
+        for (char c : string) {
+            if (UNRESERVED_CHARACTERS.contains(c)) {
+                out << c;
+            }
+            else {
+                static char percentEncode[4] = { '%', 0, 0, 0 };
+                std::snprintf(&percentEncode[1], 3, "%2x", c);
+                out << percentEncode;
+            }
+        }
+
+        return out.str();
+    }
+
     Uri::Uri()
         : m_Impl{ std::make_unique<Uri::Impl>() }
     {
@@ -397,7 +416,6 @@ namespace Uri {
         return m_Impl->path.size() && !m_Impl->path[0].empty();
     }
 
-    // TODO: this method should be refactored
     std::string Uri::constructString() const
     {
         std::ostringstream outString, pathString;

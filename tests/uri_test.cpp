@@ -563,5 +563,21 @@ TEST_CASE("Resolve path interprets . as the same \"directory\" the path is in.")
     CHECK(uri.path() == std::vector<std::string>{ "", "foo", "bar", "" });
 }
 
+TEST_CASE("Percent encoding does nothing to an empty string.") {
+    CHECK(Uri::Uri::percentEncode("") == "");
+}
+
+TEST_CASE("Percent encode does not touch string with unreserved characters.") {
+    CHECK(Uri::Uri::percentEncode("foo") == "foo");
+    CHECK(Uri::Uri::percentEncode("test") == "test");
+    CHECK(Uri::Uri::percentEncode("-") == "-");
+}
+
+TEST_CASE("Percent encode correctly encodes reserved characters.") {
+    CHECK(Uri::Uri::percentEncode(" ") == "%20");
+    CHECK(Uri::Uri::percentEncode("@") == "%40");
+    CHECK(Uri::Uri::percentEncode("  ") == "%20%20");
+}
+
 #include "./catch_main.hpp"
 
