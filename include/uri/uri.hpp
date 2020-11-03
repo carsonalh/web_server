@@ -78,6 +78,20 @@ namespace Uri {
 
         std::string constructString() const;
 
+        /**
+         * Merges the path currently held by the uri object with another path.
+         * If the other path is relative, it will be resolved like any other
+         * path resolution, but if it is absolute, the other path will
+         * completely replace this uri's path.
+         * @param[in] otherPath
+         *      The path to use to resolve this uri's path. Uses the same
+         *      conventions as the "path" property of this uri class, with an
+         *      exception: the values "." and ".." have the same meaning that
+         *      they would in a normal file system; "." meaning to stay in the
+         *      same directory, and ".." meaning to go up one level.
+         */
+        void resolvePath(const std::vector<std::string>& otherPath);
+
         void setScheme(const std::string& scheme);
 
         void setUserInfo(const std::string& userInfo);

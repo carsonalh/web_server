@@ -437,6 +437,29 @@ namespace Uri {
         return outString.str();
     }
 
+    void Uri::resolvePath(const std::vector<std::string>& otherPath)
+    {
+        auto& path = m_Impl->path;
+
+        if (otherPath.size() > 0 && otherPath[0].empty()) {
+            path = otherPath;
+            return;
+        }
+
+        if (path.size() != 1 && path[path.size() - 1].empty()) {
+            path.pop_back();
+        }
+
+        for (const auto& p : otherPath) {
+            if (p == "..")
+                path.pop_back();
+            else if (p == ".")
+                continue;
+            else
+                path.push_back(p);
+        }
+    }
+
     void Uri::setScheme(const std::string& scheme)
     {
         m_Impl->scheme = scheme;

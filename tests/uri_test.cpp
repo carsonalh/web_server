@@ -482,5 +482,86 @@ TEST_CASE("Relative paths are treated as absolute when constructing a string wit
     CHECK(uri.constructString() == "//example.com/a/relative/path/");
 }
 
+TEST_CASE("Resolves basic relative paths.") {
+    Uri::Uri uri;
+
+    uri.setPath({ "", "a", "b" });
+    uri.resolvePath({ "c" });
+
+    CHECK(uri.path() == std::vector<std::string>{ "", "a", "b", "c" });
+
+    uri.setPath({ "" });
+    uri.resolvePath({ "" });
+
+    CHECK(uri.path() == std::vector<std::string>{ "" });
+
+    uri.setPath({ "" });
+    uri.resolvePath({ "", "a" });
+
+    CHECK(uri.path() == std::vector<std::string>{ "", "a" });
+
+    uri.setPath({ "", "foo", "bar" });
+    uri.resolvePath({ "baz" });
+
+    CHECK(uri.path() == std::vector<std::string>{ "", "foo", "bar", "baz" });
+}
+
+TEST_CASE("Uses trailing slash of path to resolve paths.") {
+    Uri::Uri uri;
+
+    uri.setPath({ "", "a", "b" });
+    uri.resolvePath({ "c", "" });
+
+    CHECK(uri.path() == std::vector<std::string>{ "", "a", "b", "c", "" });
+
+    uri.setPath({ "", "a", "b", "" });
+    uri.resolvePath({ "c", "" });
+
+    CHECK(uri.path() == std::vector<std::string>{ "", "a", "b", "c", "" });
+
+    uri.setPath({ "", "a", "b", "" });
+    uri.resolvePath({ "c" });
+
+    CHECK(uri.path() == std::vector<std::string>{ "", "a", "b", "c" });
+
+    uri.setPath({ "", "a", "b", "" });
+    uri.resolvePath({ "", "c", "" });
+
+    CHECK(uri.path() == std::vector<std::string>{ "", "c", "" });
+
+    uri.setPath({ "" });
+    uri.resolvePath({ "foo", "bar" });
+
+    CHECK(uri.path() == std::vector<std::string>{ "", "foo", "bar" });
+}
+
+TEST_CASE("Resolve path can use .. notation to go up one level.") {
+    Uri::Uri uri;
+
+    uri.setPath({ "", "foo", "bar" });
+    uri.resolvePath({ ".." });
+
+    CHECK(uri.path() == std::vector<std::string>{ "", "foo" });
+
+    uri.setPath({ "", "foo", "bar" });
+    uri.resolvePath({ "..", "baz" });
+
+    CHECK(uri.path() == std::vector<std::string>{ "", "foo", "baz" });
+}
+
+TEST_CASE("Resolve path interprets . as the same \"directory\" the path is in.") {
+    Uri::Uri uri;
+
+    uri.setPath({ "", "foo", "bar" });
+    uri.resolvePath({ "." });
+
+    CHECK(uri.path() == std::vector<std::string>{ "", "foo", "bar" });
+
+    uri.setPath({ "", "foo", "bar" });
+    uri.resolvePath({ ".", "" });
+
+    CHECK(uri.path() == std::vector<std::string>{ "", "foo", "bar", "" });
+}
+
 #include "./catch_main.hpp"
 
