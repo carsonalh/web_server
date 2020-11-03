@@ -208,12 +208,12 @@ namespace Uri {
         return true;
     }
 
-    std::string Uri::percentEncode(std::string_view string)
+    std::string Uri::percentEncode(std::string_view string, const CharacterSet& allowedCharacters)
     {
         std::ostringstream out;
 
         for (char c : string) {
-            if (UNRESERVED_CHARACTERS.contains(c)) {
+            if (allowedCharacters.contains(c)) {
                 out << c;
             }
             else {

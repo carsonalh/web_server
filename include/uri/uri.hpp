@@ -9,6 +9,28 @@
 namespace Uri {
 
     /**
+     * Represents a set of characters which is intended to be used primarily
+     * for URIs to match the specification, but can also be used for other
+     * purposes.
+     */
+    class CharacterSet
+    {
+    public:
+        CharacterSet(std::initializer_list<char> init);
+
+        /**
+         * Tells whether or not the set contains the given character.
+         */
+        bool contains(char c) const;
+
+    protected:
+        const std::unordered_set<char> m_Characters;
+
+    };
+
+    extern const CharacterSet UNRESERVED_CHARACTERS;
+
+    /**
      * Represents a URI.
      * To read more about the standard this implements, read the [RFC](https://tools.ietf.org/html/rfc3986)
      */
@@ -39,8 +61,11 @@ namespace Uri {
          * detect this, and will instead percent-encoded the parts that have
          * already been encoded, so it is up to the user of this function to
          * manage what has and has not already been encoded.
+         * @param[in] allowedCharacters
+         *      A CharacterSet of all of the characters that do not have to be
+         *      percent-encoded.
          */
-        static std::string percentEncode(std::string_view string);
+        static std::string percentEncode(std::string_view string, const CharacterSet& allowedCharacters = UNRESERVED_CHARACTERS);
 
         /**
          * Decodes a percent-encoded string, and returns the decoded value.
@@ -138,28 +163,6 @@ namespace Uri {
         std::unique_ptr<Impl> m_Impl;
 
     };
-
-    /**
-     * Represents a set of characters which is intended to be used primarily
-     * for URIs to match the specification, but can also be used for other
-     * purposes.
-     */
-    class CharacterSet
-    {
-    public:
-        CharacterSet(std::initializer_list<char> init);
-
-        /**
-         * Tells whether or not the set contains the given character.
-         */
-        bool contains(char c) const;
-
-    protected:
-        const std::unordered_set<char> m_Characters;
-
-    };
-
-    extern const CharacterSet UNRESERVED_CHARACTERS;
 
 }
 
