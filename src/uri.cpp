@@ -46,6 +46,9 @@ namespace Uri {
         static bool verify8bitDecimalFromEnd(const std::string& string, unsigned end);
 
     public:
+        std::smatch                 searchResults; // This is put here so it doesn't have to be created and destroyed
+                                                   // each time parseFromString or its helper functions are called
+
         std::string                 scheme;
         std::string                 userInfo;
         std::string                 host;
@@ -59,19 +62,19 @@ namespace Uri {
 
     public:
         /** Clears all the member data of the implementation. */
-        void clear()
-        {
-            scheme.clear();
-            userInfo.clear();
-            host.clear();
-            path.clear();
-            query.clear();
-            fragment.clear();
-            hasQuery = false;
-            hasFragment = false;
-            hasPort = false;
-            port = 0;
-        }
+        void clear();
+
+        bool parseAndRemoveScheme(std::string& string);
+
+        bool parseAndRemoveUserInfoAndHost(std::string& string);
+
+        bool parseAndRemovePort(std::string& string);
+
+        bool parseAndRemovePath(std::string& string);
+
+        bool parseAndRemoveQuery(std::string& string);
+
+        bool parseAndRemoveFragment(std::string& string);
 
     };
 
@@ -160,6 +163,184 @@ namespace Uri {
             if (ipv4Segment & ~0x00ff)
                 return false;
         }
+
+        return true;
+    }
+
+    void Uri::Impl::clear()
+    {
+        scheme.clear();
+        userInfo.clear();
+        host.clear();
+        path.clear();
+        query.clear();
+        fragment.clear();
+        hasQuery = false;
+        hasFragment = false;
+        hasPort = false;
+        port = 0;
+    }
+
+    bool Uri::Impl::parseAndRemoveScheme(std::string& string)
+    {
+        std::regex schemePattern{ "^([a-zA-Z][a-zA-Z0-9+\\-.]*):" };
+
+        if (std::regex_search(string, searchResults, schemePattern)) {
+            scheme = searchResults[1].str();
+            string = searchResults.suffix().str();
+        }
+        else if (std::regex_search(string, std::regex("^.*://"))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    bool Uri::Impl::parseAndRemoveUserInfoAndHost(std::string& string)
+    {
+        std::regex userInfoAndHostPattern{
+            "^:?//((([a-zA-Z0-9\\-._~:!$&'\\(\\)*+,;=]|%[0-9a-fA-F]{2})*)@)?"
+            "(([a-zA-Z0-9\\-._~]|%[a-fA-F0-9]{2}|[!$&'()*+,;=])+)?"
+        };
+
+        if (std::regex_search(string, searchResults, userInfoAndHostPattern)) {
+            userInfo = searchResults[2].str();
+            host = searchResults[4].str();
+            string = searchResults.suffix().str();
+        }
+
+        // IPv6 support ==================================================
+        if (host == "") {
+            std::regex ipv6HostPattern{ "(\\[[a-fA-F0-9:.]+\\])" };
+            std::regex badIpv6HostPattern{ "(\\[.*\\])" };
+
+            if (std::regex_search(string, searchResults, ipv6HostPattern)) {
+                auto& ipv6RawHost = searchResults[1].str();
+
+                auto& innerHost = ipv6RawHost.substr(1, ipv6RawHost.size() - 2);
+                if (isIpv6String(innerHost)) {
+                    host = innerHost;
+                }
+                else {
+                    return false;
+                }
+
+                string = searchResults.suffix().str();
+            }
+            else if (std::regex_search(string, badIpv6HostPattern)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool Uri::Impl::parseAndRemovePort(std::string& string)
+    {
+        std::regex portPattern{ "^:([0-9]{0,5})" };
+
+        std::string portString;
+        if (std::regex_search(string, searchResults, portPattern)) {
+            portString = searchResults[1].str();
+            string = searchResults.suffix().str();
+        }
+        else {
+            portString = "";
+        }
+
+        hasPort = !portString.empty();
+
+        uint32_t portNumber = 0;
+        const uint32_t portMask = 0x0000ffff;
+
+        for (auto c : portString) {
+            // The regex has already guaranteed that c will be numeric
+            portNumber *= 10;
+            portNumber += c - '0';
+
+            if (portNumber & ~portMask) {
+                hasPort = false;
+                return false;
+            }
+        }
+
+        port = portNumber;
+
+        return true;
+    }
+
+    bool Uri::Impl::parseAndRemovePath(std::string& string)
+    {
+        std::regex pathPattern{
+            "^("
+                "/?(([a-zA-Z0-9\\-._~!$&'()*+,;=]|%[a-fA-F0-9]{2})*/)*"
+                "([a-zA-Z0-9\\-._~!$&'()*+,;=]|%[a-fA-F0-9]{2})*"
+            ")"
+        };
+
+        std::string result;
+        if (std::regex_search(string, searchResults, pathPattern)) {
+            result = searchResults[1].str();
+            string = searchResults.suffix().str();
+        }
+        else {
+            result = "";
+        }
+
+        if (result.size() > 0) {
+            for (int i = 0; i < result.size(); ++i) {
+                auto end = i;
+
+                while (end < result.size() && result[end] != '/') {
+                    ++end;
+                }
+
+                path.push_back(
+                    percentDecode(result.substr(i, end - i))
+                );
+
+                i = end;
+            }
+
+            if (result[result.size() - 1] == '/' && !path[path.size() - 1].empty()) {
+                path.push_back("");
+            }
+        }
+
+        return true;
+    }
+
+    bool Uri::Impl::parseAndRemoveQuery(std::string& string)
+    {
+        std::regex queryPattern{ "^\\?(([a-zA-Z0-9\\-._~!$&'()*+,;=/?:@]|%[a-fA-F0-9]{2})*)" };
+        std::string parsedQuery;
+
+        if (std::regex_search(string, searchResults, queryPattern)) {
+            parsedQuery = searchResults[1].str();
+            string = searchResults.suffix().str();
+        }
+        else {
+            parsedQuery = "";
+        }
+
+        query = percentDecode(parsedQuery);
+
+        return true;
+    }
+
+    bool Uri::Impl::parseAndRemoveFragment(std::string& string)
+    {
+        std::regex fragmentPattern{ "^#(([a-zA-Z0-9\\-._~!$&'()*+,;=/?:@]|%[a-fA-F0-9]{2})*)" };
+        std::string parsedFragment;
+
+        if (std::regex_search(string, searchResults, fragmentPattern)) {
+            parsedFragment = searchResults[1].str();
+            string = searchResults.suffix().str();
+        }
+        else {
+            parsedFragment = "";
+        }
+
+        fragment = percentDecode(parsedFragment);
 
         return true;
     }
@@ -264,134 +445,14 @@ namespace Uri {
             return false;
         }
 
-        std::smatch searchResults;
-
         m_Impl->clear();
 
-        auto search = [&string, &searchResults](const std::regex& pattern, int resultIndex)
-                -> std::string {
-            auto found = std::regex_search(string, searchResults, pattern);
-
-            if (found) {
-                auto& result = searchResults[resultIndex].str();
-                string = searchResults.suffix().str();
-                return result;
-            }
-            else {
-                return "";
-            }
-        };
-
-        if (std::regex_search(string, searchResults, std::regex("^([a-zA-Z][a-zA-Z0-9+\\-.]*):"))) {
-            m_Impl->scheme = searchResults[1].str();
-            string = searchResults.suffix().str();
-        }
-        else if (std::regex_search(string, std::regex("^.*://"))) {
-            return false;
-        }
-
-        {
-            std::regex userInfoAndHostPattern{
-                "^:?//((([a-zA-Z0-9\\-._~:!$&'\\(\\)*+,;=]|%[0-9a-fA-F]{2})*)@)?"
-                "(([a-zA-Z0-9\\-._~]|%[a-fA-F0-9]{2}|[!$&'()*+,;=])+)?"
-            };
-
-            if (std::regex_search(string, searchResults, userInfoAndHostPattern)) {
-                m_Impl->userInfo = searchResults[2].str();
-                m_Impl->host = searchResults[4].str();
-                string = searchResults.suffix().str();
-            }
-
-            //ipv6 support
-            if (m_Impl->host == "") {
-                std::regex ipv6HostPattern{"(\\[[a-fA-F0-9:.]+\\])"};
-                std::regex badIpv6HostPattern{"(\\[.*\\])"};
-
-                if (std::regex_search(string, searchResults, ipv6HostPattern)) {
-                    auto& ipv6RawHost = searchResults[1].str();
-
-                    auto& innerHost = ipv6RawHost.substr(1, ipv6RawHost.size() - 2);
-                    if (isIpv6String(innerHost)) {
-                        m_Impl->host = innerHost;
-                    }
-                    else {
-                        return false;
-                    }
-
-                    string = searchResults.suffix().str();
-                }
-                else if (std::regex_search(string, badIpv6HostPattern)) {
-                    return false;
-                }
-            }
-        }
-
-        std::regex portPattern{ "^:([0-9]{0,5})" };
-
-        {
-            const auto& port = search(portPattern, 1);
-            m_Impl->hasPort = !port.empty();
-
-            uint32_t portNumber = 0;
-            const uint32_t portMask = 0x0000ffff;
-
-            for (auto c : port) {
-                // The regex has already guaranteed that c will be numeric
-                portNumber *= 10;
-                portNumber += c - '0';
-
-                if (portNumber & ~portMask) {
-                    m_Impl->hasPort = false;
-                    return false;
-                }
-            }
-
-            m_Impl->port = portNumber;
-        }
-
-        std::regex pathPattern{
-            "^("
-                "/?(([a-zA-Z0-9\\-._~!$&'()*+,;=]|%[a-fA-F0-9]{2})*/)*"
-                "([a-zA-Z0-9\\-._~!$&'()*+,;=]|%[a-fA-F0-9]{2})*"
-            ")"
-        };
-
-        {
-            const auto& result = search(pathPattern, 1);
-
-            if (result.size() > 0) {
-                for (int i = 0; i < result.size(); ++i) {
-                    auto end = i;
-
-                    while (end < result.size() && result[end] != '/') {
-                        ++end;
-                    }
-
-                    m_Impl->path.push_back(
-                        percentDecode(result.substr(i, end - i))
-                    );
-
-                    i = end;
-                }
-
-                if (result[result.size() - 1] == '/' && !m_Impl->path[m_Impl->path.size() - 1].empty()) {
-                    m_Impl->path.push_back("");
-                }
-            }
-        }
-
-        std::regex queryPattern{ "^\\?(([a-zA-Z0-9\\-._~!$&'()*+,;=/?:@]|%[a-fA-F0-9]{2})*)" };
-        m_Impl->query = percentDecode(search(queryPattern, 1));
-
-        std::regex fragmentPattern{ "^#(([a-zA-Z0-9\\-._~!$&'()*+,;=/?:@]|%[a-fA-F0-9]{2})*)" };
-        m_Impl->fragment = percentDecode(search(fragmentPattern, 1));
-
-        if (m_Impl->fragment.size() > 0) {
-            if (searchResults.suffix().str().size() > 0) {
-                m_Impl->clear();
-                return false;
-            }
-        }
+        if (!m_Impl->parseAndRemoveScheme(string))          return false;
+        if (!m_Impl->parseAndRemoveUserInfoAndHost(string)) return false;
+        if (!m_Impl->parseAndRemovePort(string))            return false;
+        if (!m_Impl->parseAndRemovePath(string))            return false;
+        if (!m_Impl->parseAndRemoveQuery(string))           return false;
+        if (!m_Impl->parseAndRemoveFragment(string))        return false;
 
         return true;
     }
