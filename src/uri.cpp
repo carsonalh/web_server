@@ -450,7 +450,7 @@ namespace Uri {
             unsigned index = 0;
             for (const auto& segment : m_Impl->path) {
                 if (!segment.empty() || index != 0)
-                    pathString << '/' << segment;
+                    pathString << '/' << percentEncode(segment);
                 ++index;
             }
         }
@@ -468,11 +468,11 @@ namespace Uri {
         outString << pathString.str();
 
         if (m_Impl->hasQuery) {
-            outString << '?' + m_Impl->query;
+            outString << '?' << percentEncode(m_Impl->query);
         }
 
         if (m_Impl->hasFragment) {
-            outString << '#' + m_Impl->fragment;
+            outString << '#' << percentEncode(m_Impl->fragment);
         }
 
         return outString.str();

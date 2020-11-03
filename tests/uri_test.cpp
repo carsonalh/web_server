@@ -598,5 +598,26 @@ TEST_CASE("Percent decode correctly decodes reserved characters.") {
     CHECK(Uri::Uri::percentDecode("%2a") == "*");
 }
 
+TEST_CASE("Correctly percent-encodes characters when constructing a string.") {
+    Uri::Uri uri;
+
+    uri.setHost("example.com");
+    uri.setPath({ "foo", "bar ", });
+
+    CHECK(uri.constructString() == "//example.com/foo/bar%20");
+
+    uri.setPath({});
+    uri.setQuery("this is a test");
+
+    CHECK(uri.constructString() == "//example.com?this%20is%20a%20test");
+
+    uri.clearQuery();
+    uri.setFragment("fragment@@");
+
+    CHECK(uri.constructString() == "//example.com#fragment%40%40");
+
+    uri.clearFragment();
+}
+
 #include "./catch_main.hpp"
 
