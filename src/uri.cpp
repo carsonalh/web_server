@@ -367,7 +367,9 @@ namespace Uri {
                         ++end;
                     }
 
-                    m_Impl->path.push_back(result.substr(i, end - i));
+                    m_Impl->path.push_back(
+                        percentDecode(result.substr(i, end - i))
+                    );
 
                     i = end;
                 }
@@ -379,10 +381,10 @@ namespace Uri {
         }
 
         std::regex queryPattern{ "^\\?(([a-zA-Z0-9\\-._~!$&'()*+,;=/?:@]|%[a-fA-F0-9]{2})*)" };
-        m_Impl->query = search(queryPattern, 1);
+        m_Impl->query = percentDecode(search(queryPattern, 1));
 
         std::regex fragmentPattern{ "^#(([a-zA-Z0-9\\-._~!$&'()*+,;=/?:@]|%[a-fA-F0-9]{2})*)" };
-        m_Impl->fragment = search(fragmentPattern, 1);
+        m_Impl->fragment = percentDecode(search(fragmentPattern, 1));
 
         if (m_Impl->fragment.size() > 0) {
             if (searchResults.suffix().str().size() > 0) {

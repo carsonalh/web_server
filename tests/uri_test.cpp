@@ -619,5 +619,21 @@ TEST_CASE("Correctly percent-encodes characters when constructing a string.") {
     uri.clearFragment();
 }
 
+TEST_CASE("Correctly percent decodes when parsing a uri string.") {
+    Uri::Uri uri;
+
+    CHECK(uri.parseFromString("//example.com/foo/bar%20"));
+    CHECK(uri.path() == std::vector<std::string>{ "", "foo", "bar " });
+
+    CHECK(uri.parseFromString("http://example.com:8080/?param1=%40test"));
+    CHECK(uri.query() == "param1=@test");
+
+    CHECK(uri.parseFromString("http://example.com:8080/?a=%23"));
+    CHECK(uri.query() == "a=#");
+
+    CHECK(uri.parseFromString("http://example.com:8080/#my%20fragment"));
+    CHECK(uri.fragment() == "my fragment");
+}
+
 #include "./catch_main.hpp"
 
