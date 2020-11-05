@@ -1,14 +1,14 @@
-#include <uri/uri.hpp>
+#include "web/uri.hpp"
 
 #include <catch2/catch_all.hpp>
 
 TEST_CASE("Returns true for a valid uri.") {
-    Uri::Uri uri;
+    uri::Uri uri;
     CHECK(uri.parseFromString("https://www.example.com/foo/bar?query#fragment"));
 }
 
 TEST_CASE("Correctly identifies the scheme of the uri.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("https://www.example.com/foo/bar?query#fragment"));
     CHECK(uri.scheme() == "https");
@@ -24,7 +24,7 @@ TEST_CASE("Correctly identifies the scheme of the uri.") {
 }
 
 TEST_CASE("Returns false for a bad scheme.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     const std::vector<std::string> bad_scheme_uris{
         "://example.com",
@@ -40,7 +40,7 @@ TEST_CASE("Returns false for a bad scheme.") {
 }
 
 TEST_CASE("Correctly identifies the host of the uri.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("https://www.example.com/foo/bar?query#fragment"));
     CHECK(uri.host() == "www.example.com");
@@ -59,7 +59,7 @@ TEST_CASE("Correctly identifies the host of the uri.") {
 }
 
 TEST_CASE("Correctly identifies the path of the uri for absolute path.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("https://www.example.com/foo/bar?query#fragment"));
     CHECK(uri.path() == std::vector<std::string>{ "", "foo", "bar" });
@@ -75,7 +75,7 @@ TEST_CASE("Correctly identifies the path of the uri for absolute path.") {
 }
 
 TEST_CASE("Correctly identifies the path of the uri with a trailing slash.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("https://www.example.com/foo/bar/?query#fragment"));
     CHECK(uri.path() == std::vector<std::string>{ "", "foo", "bar", "" });
@@ -84,14 +84,14 @@ TEST_CASE("Correctly identifies the path of the uri with a trailing slash.") {
 }
 
 TEST_CASE("Gives empty path when no \"path\" is given at all.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("https://www.example.com?query#fragment"));
     CHECK(uri.path() == std::vector<std::string>{});
 }
 
 TEST_CASE("Correctly identifies query.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("https://www.example.com?query#fragment"));
     CHECK(uri.query() == "query");
@@ -104,7 +104,7 @@ TEST_CASE("Correctly identifies query.") {
 }
 
 TEST_CASE("Correctly identifies fragment.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("https://www.example.com?query#fragment"));
     CHECK(uri.fragment() == "fragment");
@@ -114,7 +114,7 @@ TEST_CASE("Correctly identifies fragment.") {
 }
 
 TEST_CASE("If query and fragment swapped, only identifies fragment.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("https://www.example.com#fragment?fake_query"));
     CHECK(uri.fragment() == "fragment?fake_query");
@@ -124,7 +124,7 @@ TEST_CASE("If query and fragment swapped, only identifies fragment.") {
 }
 
 TEST_CASE("Correctly identifies empty query and empty fragment") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("https://www.example.com?#"));
     CHECK(uri.fragment() == "");
@@ -136,7 +136,7 @@ TEST_CASE("Correctly identifies empty query and empty fragment") {
 }
 
 TEST_CASE("Identifies relative path.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("this/is/relative"));
     CHECK(uri.host() == "");
@@ -152,7 +152,7 @@ TEST_CASE("Identifies relative path.") {
 }
 
 TEST_CASE("Identifies absolute path correctly.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("/this/is/absolute"));
     CHECK(uri.host() == "");
@@ -172,7 +172,7 @@ TEST_CASE("Identifies absolute path correctly.") {
 }
 
 TEST_CASE("Identifies empty path correctly.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("//example.com"));
     CHECK(uri.host() == "example.com");
@@ -180,13 +180,13 @@ TEST_CASE("Identifies empty path correctly.") {
 }
 
 TEST_CASE("Returns false for empty string.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK_FALSE(uri.parseFromString(""));
 }
 
 TEST_CASE("Correctly identifies IPv4 addresses.") {
-    using Uri = Uri::Uri;
+    using namespace uri;
     CHECK(Uri::isIpv4String("0.0.0.0"));
     CHECK(Uri::isIpv4String("255.255.255.0"));
     CHECK_FALSE(Uri::isIpv4String("255.255.255.256"));
@@ -194,7 +194,7 @@ TEST_CASE("Correctly identifies IPv4 addresses.") {
 }
 
 TEST_CASE("Correctly parses a uri that has an IPv4 address as a host.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("//127.0.0.1/"));
     CHECK(uri.host() == "127.0.0.1");
@@ -207,7 +207,7 @@ TEST_CASE("Correctly parses a uri that has an IPv4 address as a host.") {
 }
 
 TEST_CASE("Correctly identifies IPv6 addresses.") {
-    using Uri = Uri::Uri;
+    using namespace uri;
     CHECK(Uri::isIpv6String("::1"));
     CHECK(Uri::isIpv6String("::ffff:1"));
 
@@ -226,7 +226,7 @@ TEST_CASE("Correctly identifies IPv6 addresses.") {
 }
 
 TEST_CASE("Parses a uri with a ipv6 address as a host.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     struct TestVector
     {
@@ -250,7 +250,7 @@ TEST_CASE("Parses a uri with a ipv6 address as a host.") {
 }
 
 TEST_CASE("Identifies other URI elements with ipv6 as a host.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("//[::1]/this/is/a/path"));
     CHECK(uri.path() == std::vector<std::string>{ "", "this", "is", "a", "path" });
@@ -263,14 +263,14 @@ TEST_CASE("Identifies other URI elements with ipv6 as a host.") {
 }
 
 TEST_CASE("Parses a uri with a bad ipv6 address.") {
-    Uri::Uri uri;
+    uri::Uri uri;
     CHECK_FALSE(uri.parseFromString("//[]"));
     CHECK_FALSE(uri.parseFromString("//[::fffg]"));
     CHECK_FALSE(uri.parseFromString("//[::1:0.0.0.256]"));
 }
 
 TEST_CASE("Correctly identifies if has a port or not.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("//example.com:8080"));
     CHECK(uri.hasPort());
@@ -286,7 +286,7 @@ TEST_CASE("Correctly identifies if has a port or not.") {
 }
 
 TEST_CASE("Does not parse port out of range.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK_FALSE(uri.parseFromString("//example.com:65536"));
     CHECK_FALSE(uri.hasPort());
@@ -299,7 +299,7 @@ TEST_CASE("Does not parse port out of range.") {
 }
 
 TEST_CASE("Correctly retrieves the port from a uri.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("//example.com:0"));
     CHECK(uri.port() == 0);
@@ -309,7 +309,7 @@ TEST_CASE("Correctly retrieves the port from a uri.") {
 }
 
 TEST_CASE("Correctly retrieves user info from the uri.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("//john.doe:password@example.com:0"));
     CHECK(uri.userInfo() == "john.doe:password");
@@ -319,7 +319,7 @@ TEST_CASE("Correctly retrieves user info from the uri.") {
 }
 
 TEST_CASE("Correctly identifies whether or not a uri is relative.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("foo/bar"));
     CHECK(uri.containsRelativePath());
@@ -335,7 +335,7 @@ TEST_CASE("Correctly identifies whether or not a uri is relative.") {
 }
 
 TEST_CASE("Correctly constructs a URI with a scheme and host") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     uri.setScheme("http");
     uri.setHost("example.com");
@@ -347,7 +347,7 @@ TEST_CASE("Correctly constructs a URI with a scheme and host") {
 }
 
 TEST_CASE("Correctly constructs a URI with scheme, host, and path") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     uri.setScheme("http");
     uri.setHost("example.com");
@@ -367,7 +367,7 @@ TEST_CASE("Correctly constructs a URI with scheme, host, and path") {
 }
 
 TEST_CASE("Constructs a URI with a host and no scheme") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     uri.setHost("example.com");
 
@@ -375,7 +375,7 @@ TEST_CASE("Constructs a URI with a host and no scheme") {
 }
 
 TEST_CASE("Constructs a URI with a port.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     uri.setScheme("http");
     uri.setHost("www.example.com");
@@ -386,7 +386,7 @@ TEST_CASE("Constructs a URI with a port.") {
 }
 
 TEST_CASE("Constructs a URI with a query.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     uri.setScheme("http");
     uri.setHost("www.example.com");
@@ -398,7 +398,7 @@ TEST_CASE("Constructs a URI with a query.") {
 }
 
 TEST_CASE("Constructs a URI with a fragment.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     uri.setScheme("http");
     uri.setHost("www.example.com");
@@ -410,7 +410,7 @@ TEST_CASE("Constructs a URI with a fragment.") {
 }
 
 TEST_CASE("Can construct URI-s with query question mark with an empty query.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     uri.setQuery("");
     uri.setHost("example.com");
@@ -424,7 +424,7 @@ TEST_CASE("Can construct URI-s with query question mark with an empty query.") {
 }
 
 TEST_CASE("Can construct URI-s with fragment pound sign with an empty fragment.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     uri.setFragment("");
     uri.setHost("example.com");
@@ -438,7 +438,7 @@ TEST_CASE("Can construct URI-s with fragment pound sign with an empty fragment."
 }
 
 TEST_CASE("Compound examples with empty queries and fragments are parsed correctly.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     uri.setQuery("");
     uri.setFragment("");
@@ -451,7 +451,7 @@ TEST_CASE("Compound examples with empty queries and fragments are parsed correct
 }
 
 TEST_CASE("Paths with trailing empty strings will have a trailing slash in the constructed uri string.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     uri.setHost("google.com");
     uri.setPath({
@@ -471,7 +471,7 @@ TEST_CASE("Paths with trailing empty strings will have a trailing slash in the c
 }
 
 TEST_CASE("Relative paths are treated as absolute when constructing a string with no other information.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     uri.setHost("example.com");
     uri.setPath({ "a", "relative", "path" });
@@ -483,7 +483,7 @@ TEST_CASE("Relative paths are treated as absolute when constructing a string wit
 }
 
 TEST_CASE("Resolves basic relative paths.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     uri.setPath({ "", "a", "b" });
     uri.resolvePath({ "c" });
@@ -507,7 +507,7 @@ TEST_CASE("Resolves basic relative paths.") {
 }
 
 TEST_CASE("Uses trailing slash of path to resolve paths.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     uri.setPath({ "", "a", "b" });
     uri.resolvePath({ "c", "" });
@@ -536,7 +536,7 @@ TEST_CASE("Uses trailing slash of path to resolve paths.") {
 }
 
 TEST_CASE("Resolve path can use .. notation to go up one level.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     uri.setPath({ "", "foo", "bar" });
     uri.resolvePath({ ".." });
@@ -550,7 +550,7 @@ TEST_CASE("Resolve path can use .. notation to go up one level.") {
 }
 
 TEST_CASE("Resolve path interprets . as the same \"directory\" the path is in.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     uri.setPath({ "", "foo", "bar" });
     uri.resolvePath({ "." });
@@ -564,42 +564,48 @@ TEST_CASE("Resolve path interprets . as the same \"directory\" the path is in.")
 }
 
 TEST_CASE("Percent encoding does nothing to an empty string.") {
-    CHECK(Uri::Uri::percentEncode("") == "");
+    using namespace uri;
+    CHECK(Uri::percentEncode("") == "");
 }
 
 TEST_CASE("Percent encode does not touch string with unreserved characters.") {
-    CHECK(Uri::Uri::percentEncode("foo") == "foo");
-    CHECK(Uri::Uri::percentEncode("test") == "test");
-    CHECK(Uri::Uri::percentEncode("-") == "-");
+    using namespace uri;
+    CHECK(Uri::percentEncode("foo") == "foo");
+    CHECK(Uri::percentEncode("test") == "test");
+    CHECK(Uri::percentEncode("-") == "-");
 }
 
 TEST_CASE("Percent encode correctly encodes reserved characters.") {
-    CHECK(Uri::Uri::percentEncode(" ") == "%20");
-    CHECK(Uri::Uri::percentEncode("@") == "%40");
-    CHECK(Uri::Uri::percentEncode("  ") == "%20%20");
+    using namespace uri;
+    CHECK(Uri::percentEncode(" ") == "%20");
+    CHECK(Uri::percentEncode("@") == "%40");
+    CHECK(Uri::percentEncode("  ") == "%20%20");
 }
 
 TEST_CASE("Percent decode correctly decodes an empty string.") {
-    CHECK(Uri::Uri::percentDecode("") == "");
+    using namespace uri;
+    CHECK(Uri::percentDecode("") == "");
 }
 
 TEST_CASE("Percent decode does not modify unreserved characters") {
-    CHECK(Uri::Uri::percentDecode("foo") == "foo");
-    CHECK(Uri::Uri::percentDecode("test") == "test");
-    CHECK(Uri::Uri::percentDecode("-") == "-");
+    using namespace uri;
+    CHECK(Uri::percentDecode("foo") == "foo");
+    CHECK(Uri::percentDecode("test") == "test");
+    CHECK(Uri::percentDecode("-") == "-");
 }
 
 TEST_CASE("Percent decode correctly decodes reserved characters.") {
-    CHECK(Uri::Uri::percentDecode("%20") == " ");
-    CHECK(Uri::Uri::percentDecode("%40") == "@");
-    CHECK(Uri::Uri::percentDecode("%2B") == "+");
-    CHECK(Uri::Uri::percentDecode("%2b") == "+");
-    CHECK(Uri::Uri::percentDecode("%2A") == "*");
-    CHECK(Uri::Uri::percentDecode("%2a") == "*");
+    using namespace uri;
+    CHECK(Uri::percentDecode("%20") == " ");
+    CHECK(Uri::percentDecode("%40") == "@");
+    CHECK(Uri::percentDecode("%2B") == "+");
+    CHECK(Uri::percentDecode("%2b") == "+");
+    CHECK(Uri::percentDecode("%2A") == "*");
+    CHECK(Uri::percentDecode("%2a") == "*");
 }
 
 TEST_CASE("Correctly percent-encodes characters when constructing a string.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     uri.setHost("example.com");
     uri.setPath({ "foo", "bar ", });
@@ -620,7 +626,7 @@ TEST_CASE("Correctly percent-encodes characters when constructing a string.") {
 }
 
 TEST_CASE("Correctly percent decodes when parsing a uri string.") {
-    Uri::Uri uri;
+    uri::Uri uri;
 
     CHECK(uri.parseFromString("//example.com/foo/bar%20"));
     CHECK(uri.path() == std::vector<std::string>{ "", "foo", "bar " });

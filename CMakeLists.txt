@@ -6,10 +6,10 @@ set (CMAKE_CXX_STANDARD_REQUIRED TRUE)
 project (web_server_library VERSION 0.0.0 LANGUAGES C CXX)
 
 add_library (web_server STATIC
-        include/http/http.hpp
-        include/uri/uri.hpp
+        include/web/http.hpp
+        include/web/uri.hpp
         src/character_set.cpp
-        src/http.cpp
+        src/http_request.cpp
         src/uri.cpp
 )
 target_include_directories (web_server PUBLIC include)

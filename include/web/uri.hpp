@@ -6,7 +6,7 @@
 #include <vector>
 #include <memory>
 
-namespace Uri {
+namespace uri {
 
     /**
      * Represents a set of characters which is intended to be used primarily

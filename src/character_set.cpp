@@ -1,6 +1,6 @@
-#include <uri/uri.hpp>
+#include "web/uri.hpp"
 
-namespace Uri {
+namespace uri {
 
     CharacterSet::CharacterSet(std::initializer_list<char> initializerList)
         : m_Characters(initializerList.begin(), initializerList.end())
