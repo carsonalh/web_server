@@ -179,25 +179,59 @@ namespace http {
 
         m_Impl->headers.clear();
 
+        enum class ParsingState
+        {
+            Header,
+            Value
+        } state = ParsingState::Header;
+
         while (index < string.size()) {
+            // TODO make this a character set
+            if (state == ParsingState::Header && (
+                string[index] == ' '
+                || string[index] == '\t'
+                || string[index] == '('
+                || string[index] == ')'
+                || string[index] == '<'
+                || string[index] == '>'
+                || string[index] == '@'
+                || string[index] == ','
+                || string[index] == ';'
+                || string[index] == '\\'
+                || string[index] == '\"'
+                || string[index] == '/'
+                || string[index] == '['
+                || string[index] == ']'
+                || string[index] == '?'
+                || string[index] == '='
+                || string[index] == '{'
+                || string[index] == '}'
+                )
+                ) {
+                return false;
+            }
+
             if (string[index] == ':') {
-                if (index + 1 >= string.size()) {
-                    return false;
-                }
-                else if (string[index + 1] != ' ') {
-                    return false;
-                }
                 header = string.substr(startIndex, index - startIndex);
-                startIndex = ++index + 1;
+                ++index;
+                while (index < string.size() && string[index] == ' ') {
+                    ++index;
+                }
+                startIndex = index;
+                state = ParsingState::Value;
             }
             else if (string[index] == '\r') {
-                value = string.substr(startIndex, index - startIndex);
+                auto endIndex = index;
+                while (std::isspace(string[endIndex - 1])) {
+                    --endIndex;
+                }
+                value = string.substr(startIndex, endIndex - startIndex);
                 startIndex = ++index + 1;
+                for (auto& c : header) c = std::tolower(c);
                 m_Impl->headers.insert({ std::move(header), std::move(value) });
+                state = ParsingState::Header;
             }
-            else {
-                ++index;
-            }
+            ++index;
         }
 
         return true;
@@ -225,12 +259,16 @@ namespace http {
 
     bool Request::hasHeader(const std::string& headerName) const
     {
-        return m_Impl->headers.find(headerName) != m_Impl->headers.end();
+        std::string lowerCopy = headerName;
+        for (auto& c : lowerCopy) c = std::tolower(c);
+        return m_Impl->headers.find(lowerCopy) != m_Impl->headers.end();
     }
 
     std::string Request::header(const std::string& headerName) const
     {
-        return m_Impl->headers.at(headerName);
+        std::string lowerCopy = headerName;
+        for (auto& c : lowerCopy) c = std::tolower(c);
+        return m_Impl->headers.at(lowerCopy);
     }
 
 }

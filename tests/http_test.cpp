@@ -112,28 +112,48 @@ TEST_CASE("Is able to parse a header.") {
     http::Request http;
 
     CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html\r\nUser-Agent: X\r\n\r\n"));
-
     CHECK(http.hasHeader("Content-Type"));
     CHECK(http.header("Content-Type") == "text/html");
-
     CHECK(http.hasHeader("User-Agent"));
     CHECK(http.header("User-Agent") == "X");
 
     CHECK_FALSE(http.hasHeader("Non-Existant"));
 
     CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/plain\r\n"));
-
     CHECK(http.hasHeader("Content-Type"));
     CHECK(http.header("Content-Type") == "text/plain");
 
     CHECK_FALSE(http.hasHeader("User-Agent"));
+
+    CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type:text/plain\r\n"));
+    CHECK(http.hasHeader("Content-Type"));
+    CHECK(http.header("Content-Type") == "text/plain");
 }
 
 TEST_CASE("Does not parse an incorrect header.") {
     http::Request http;
 
-    CHECK_FALSE(http.parseFromString("GET / HTTP/1.1\r\nInvalid-Header:Value\r\n\r\n"));
-    CHECK_FALSE(http.parseFromString("GET / HTTP/1.1\r\nInvalid-Header:Value\r\n\r\n"));
+    CHECK_FALSE(http.parseFromString("GET / HTTP/1.1\r\nInvalid-Header :Value\r\n\r\n"));
+    CHECK_FALSE(http.parseFromString("GET / HTTP/1.1\r\nInvalid-Header\t:Value\r\n\r\n"));
+    CHECK_FALSE(http.parseFromString("GET / HTTP/1.1\r\n Also-Invalid:Value\r\n\r\n"));
+    CHECK_FALSE(http.parseFromString("GET / HTTP/1.1\r\nInvalid,Header:Value\r\n\r\n"));
+}
+
+TEST_CASE("Does not count trailing whitespace for header values.") {
+    http::Request http;
+
+    http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html \r\n");
+    CHECK(http.header("Content-Type") == "text/html");
+}
+
+TEST_CASE("Header names are case insensitive.") {
+    http::Request http;
+    http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html\r\n");
+    CHECK(http.hasHeader("content-type"));
+    CHECK(http.hasHeader("CONTENT-TYPE"));
+    http.parseFromString("GET / HTTP/1.1\r\ncontent-type: text/html\r\n");
+    CHECK(http.hasHeader("Content-Type"));
+    CHECK(http.hasHeader("CONTENT-TYPE"));
 }
 
 #include "./catch_main.hpp"
