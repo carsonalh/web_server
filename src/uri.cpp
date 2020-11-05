@@ -1,4 +1,4 @@
-#include "uri/uri.hpp"
+#include "web/uri.hpp"
 
 #include <cctype>
 #include <sstream>
@@ -8,9 +8,9 @@
 #include <regex>
 #include <memory>
 
-namespace Uri {
+namespace uri {
 
-    /** Implementation details of the Uri::Uri class. */
+    /** Implementation details of the uri::Uri class. */
     struct Uri::Impl
     {
     public:
