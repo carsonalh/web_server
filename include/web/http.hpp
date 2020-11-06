@@ -34,6 +34,10 @@ namespace http {
 
         std::string header(const std::string& headerName) const;
 
+        bool hasBody() const;
+
+        std::string body() const;
+
     private:
         struct Impl;
         std::unique_ptr<Impl> m_Impl;

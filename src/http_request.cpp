@@ -62,6 +62,7 @@ namespace http {
         std::unordered_map<
             std::string,
             std::string>        headers;
+        std::string             body;
 
     };
 
@@ -180,6 +181,7 @@ namespace http {
         headers.clear();
 
         bool noValue = false;
+        bool lastIterationWasReturn = false;
 
         while (index < string.size()) {
             if (string[index] == ':') {
@@ -187,10 +189,10 @@ namespace http {
                 for (auto c : header)
                     if (text::HTTP_HEADER_SEPARATORS.contains(c))
                         return -1;
+
                 ++index;
-                while (index < string.size() && string[index] == ' ') {
-                    ++index;
-                }
+
+                while (index < string.size() && string[index] == ' ') ++index;
                 if (index < string.size() && string[index] == '\r') {
                     noValue = true;
                     startIndex = --index;
@@ -198,8 +200,13 @@ namespace http {
                 else {
                     startIndex = index;
                 }
+                lastIterationWasReturn = false;
             }
             else if (string[index] == '\r') {
+                if (lastIterationWasReturn) {
+                    break;
+                }
+                lastIterationWasReturn = true;
                 auto endIndex = index;
                 if (!noValue) {
                     while (std::isspace(string[endIndex - 1])) {
@@ -214,6 +221,9 @@ namespace http {
                 for (auto& c : header) c = std::tolower(c);
                 headers.insert({ std::move(header), std::move(value) });
                 noValue = false;
+            }
+            else {
+                lastIterationWasReturn = false;
             }
             ++index;
         }
@@ -238,12 +248,26 @@ namespace http {
         if ((end = m_Impl->parseHttpVersion(string, end)) < 0)
             return false;
 
-        // parsehttpversion would have already gone past the CRLF diretly after
+        // parseHttpVersion would have already gone past the CRLF diretly after
         // it
-        // end should now be at the first character of the headers
+        // "end" should now be at the first character of the headers
 
         if ((end = m_Impl->parseHttpHeaders(string, end)) < 0)
             return false;
+
+        {
+            auto CRLF = "\r\n";
+
+            if (end + std::strlen(CRLF) < string.size()) {
+                // TODO: make sure there is a CRLF inbetween the headers and the
+                // body (and parse the body)
+                end += std::strlen(CRLF); // advancing the CRLF sequence, but is not checking if it is correct
+                m_Impl->body = string.substr(end);
+            }
+            else {
+                m_Impl->body = "";
+            }
+        }
 
         return true;
     }
@@ -280,6 +304,16 @@ namespace http {
         std::string lowerCopy = headerName;
         for (auto& c : lowerCopy) c = std::tolower(c);
         return m_Impl->headers.at(lowerCopy);
+    }
+
+    bool Request::hasBody() const
+    {
+        return !m_Impl->body.empty();
+    }
+
+    std::string Request::body() const
+    {
+        return m_Impl->body;
     }
 
 }

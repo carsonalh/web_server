@@ -139,7 +139,7 @@ TEST_CASE("Does not parse an incorrect header.") {
     CHECK_FALSE(http.parseFromString("GET / HTTP/1.1\r\nInvalid,Header:Value\r\n\r\n"));
 }
 
-TEST_CASE("Does not count trailing whitespace for header values.") {
+TEST_CASE("Does not count trailing or preceding whitespace for header values.") {
     http::Request http;
 
     CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html \r\n\r\n"));
@@ -158,13 +158,38 @@ TEST_CASE("Does not count trailing whitespace for header values.") {
 TEST_CASE("Header names are case insensitive.") {
     http::Request http;
 
-    http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html\r\n\r\n");
+    CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html\r\n\r\n"));
     CHECK(http.hasHeader("content-type"));
     CHECK(http.hasHeader("CONTENT-TYPE"));
 
-    http.parseFromString("GET / HTTP/1.1\r\ncontent-type: text/html\r\n\r\n");
+    CHECK(http.parseFromString("GET / HTTP/1.1\r\ncontent-type: text/html\r\n\r\n"));
     CHECK(http.hasHeader("Content-Type"));
     CHECK(http.hasHeader("CONTENT-TYPE"));
+}
+
+TEST_CASE("Correctly parses a simple body from a http request.") {
+    http::Request http;
+
+    CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/json\r\n\r\n{\"key\": \"value\"}\r\n"));
+    CHECK(http.hasBody());
+    CHECK(http.body() == "{\"key\": \"value\"}\r\n");
+
+    CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html\r\n\r\n<h1>this is my title</h1>\r\n"));
+    CHECK(http.hasBody());
+    CHECK(http.body() == "<h1>this is my title</h1>\r\n");
+}
+
+TEST_CASE("Identifies when requests do not have a body.") {
+    http::Request http;
+
+    CHECK(http.parseFromString("GET / HTTP/1.1\r\nUser-Agent: X\r\n\r\n"));
+    CHECK_FALSE(http.hasBody());
+
+    CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html\r\n\r\n"));
+    CHECK_FALSE(http.hasBody());
+
+    CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type:text/html\r\n\r\n"));
+    CHECK_FALSE(http.hasBody());
 }
 
 #include "./catch_main.hpp"
