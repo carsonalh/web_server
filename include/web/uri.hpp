@@ -1,5 +1,7 @@
 #pragma once
 
+#include "./text.hpp"
+
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -7,28 +9,6 @@
 #include <memory>
 
 namespace uri {
-
-    /**
-     * Represents a set of characters which is intended to be used primarily
-     * for URIs to match the specification, but can also be used for other
-     * purposes.
-     */
-    class CharacterSet
-    {
-    public:
-        CharacterSet(std::initializer_list<char> init);
-
-        /**
-         * Tells whether or not the set contains the given character.
-         */
-        bool contains(char c) const;
-
-    protected:
-        const std::unordered_set<char> m_Characters;
-
-    };
-
-    extern const CharacterSet UNRESERVED_CHARACTERS;
 
     /**
      * Represents a URI.
@@ -65,7 +45,7 @@ namespace uri {
          *      A CharacterSet of all of the characters that do not have to be
          *      percent-encoded.
          */
-        static std::string percentEncode(std::string_view string, const CharacterSet& allowedCharacters = UNRESERVED_CHARACTERS);
+        static std::string percentEncode(std::string_view string, const text::CharacterSet& allowedCharacters = text::UNRESERVED_CHARACTERS);
 
         /**
          * Decodes a percent-encoded string, and returns the decoded value.

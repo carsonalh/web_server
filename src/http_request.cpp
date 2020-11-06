@@ -1,4 +1,5 @@
 #include "web/http.hpp"
+#include "web/text.hpp"
 
 #include <string>
 #include <string_view>
@@ -186,28 +187,7 @@ namespace http {
         } state = ParsingState::Header;
 
         while (index < string.size()) {
-            // TODO make this a character set
-            if (state == ParsingState::Header && (
-                string[index] == ' '
-                || string[index] == '\t'
-                || string[index] == '('
-                || string[index] == ')'
-                || string[index] == '<'
-                || string[index] == '>'
-                || string[index] == '@'
-                || string[index] == ','
-                || string[index] == ';'
-                || string[index] == '\\'
-                || string[index] == '\"'
-                || string[index] == '/'
-                || string[index] == '['
-                || string[index] == ']'
-                || string[index] == '?'
-                || string[index] == '='
-                || string[index] == '{'
-                || string[index] == '}'
-                )
-                ) {
+            if (state == ParsingState::Header && text::HTTP_HEADER_SEPARATORS.contains(string[index]) ) {
                 return false;
             }
 
