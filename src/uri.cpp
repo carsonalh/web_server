@@ -389,7 +389,7 @@ namespace uri {
         return true;
     }
 
-    std::string Uri::percentEncode(std::string_view string, const CharacterSet& allowedCharacters)
+    std::string Uri::percentEncode(std::string_view string, const text::CharacterSet& allowedCharacters)
     {
         std::ostringstream out;
 

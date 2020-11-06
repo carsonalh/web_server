@@ -42,6 +42,18 @@ namespace http {
          */
         int parseHttpVersion(const std::string& string, int offset);
 
+        /**
+         * Parses the http headers and stores them in this implementation
+         * object.
+         * @returns
+         *      The first character immediately after the header section of the
+         *      http request. It is up to the user of this function to make
+         *      sure that the remaining characters are also valid; most
+         *      specifically, that of the CRLF that should directly follow this
+         *      part of the request.
+         */
+        int parseHttpHeaders(const std::string& string, int offset);
+
     public:
         std::string             method;
         std::string             uri;
@@ -139,80 +151,99 @@ namespace http {
         httpVersionMajor = versionMajor;
         httpVersionMinor = versionMinor;
 
+        // make sure the request line ends with a CRLF
+
+        {
+            auto CRLF = "\r\n";
+            if (string.size() <= (index - 1) + std::strlen(CRLF)) {
+                return -1;
+            }
+            else if (std::memcmp(CRLF, string.data() + index, std::strlen(CRLF)) != 0) {
+                return -1;
+            }
+            index += std::strlen(CRLF);
+        }
+        if (string.size() == index) {
+            return -1;
+        }
+
+        return index;
+    }
+
+    int Request::Impl::parseHttpHeaders(const std::string& string, int offset)
+    {
+        auto index = offset;
+        auto startIndex = index;
+
+        std::string header, value;
+
+        headers.clear();
+
+        bool noValue = false;
+
+        while (index < string.size()) {
+            if (string[index] == ':') {
+                header = string.substr(startIndex, index - startIndex);
+                for (auto c : header)
+                    if (text::HTTP_HEADER_SEPARATORS.contains(c))
+                        return -1;
+                ++index;
+                while (index < string.size() && string[index] == ' ') {
+                    ++index;
+                }
+                if (index < string.size() && string[index] == '\r') {
+                    noValue = true;
+                    startIndex = --index;
+                }
+                else {
+                    startIndex = index;
+                }
+            }
+            else if (string[index] == '\r') {
+                auto endIndex = index;
+                if (!noValue) {
+                    while (std::isspace(string[endIndex - 1])) {
+                        --endIndex;
+                    }
+                    value = string.substr(startIndex, endIndex - startIndex);
+                }
+                else {
+                    value = "";
+                }
+                startIndex = ++index + 1;
+                for (auto& c : header) c = std::tolower(c);
+                headers.insert({ std::move(header), std::move(value) });
+                noValue = false;
+            }
+            ++index;
+        }
+
         return index;
     }
 
     bool Request::parseFromString(std::string string)
     {
-        size_t end = 0;
+        int end = 0;
 
         if ((end = m_Impl->parseHttpMethod(string, 0)) < 0)
             return false;
 
-        if ((end = m_Impl->parseHttpUri(string, ++end)) < 0)
+        ++end; // Advance past the trailing space
+
+        if ((end = m_Impl->parseHttpUri(string, end)) < 0)
             return false;
 
-        if ((end = m_Impl->parseHttpVersion(string, ++end)) < 0)
+        ++end; // Advance past the trailing space
+
+        if ((end = m_Impl->parseHttpVersion(string, end)) < 0)
             return false;
 
-        // make sure the request line ends with a CRLF
+        // parsehttpversion would have already gone past the CRLF diretly after
+        // it
+        // end should now be at the first character of the headers
 
-        {
-            auto CRLF = "\r\n";
-            if (string.size() <= (end - 1) + std::strlen(CRLF)) {
-                return false;
-            }
-            else if (std::memcmp(CRLF, string.data() + end, std::strlen(CRLF)) != 0) {
-                return false;
-            }
-            end += std::strlen(CRLF);
-        }
-
-        if (string.size() == end) {
+        if ((end = m_Impl->parseHttpHeaders(string, end)) < 0)
             return false;
-        }
-        
-        auto index = end;
-
-        size_t startIndex = index;
-
-        std::string header, value;
-
-        m_Impl->headers.clear();
-
-        enum class ParsingState
-        {
-            Header,
-            Value
-        } state = ParsingState::Header;
-
-        while (index < string.size()) {
-            if (state == ParsingState::Header && text::HTTP_HEADER_SEPARATORS.contains(string[index]) ) {
-                return false;
-            }
-
-            if (string[index] == ':') {
-                header = string.substr(startIndex, index - startIndex);
-                ++index;
-                while (index < string.size() && string[index] == ' ') {
-                    ++index;
-                }
-                startIndex = index;
-                state = ParsingState::Value;
-            }
-            else if (string[index] == '\r') {
-                auto endIndex = index;
-                while (std::isspace(string[endIndex - 1])) {
-                    --endIndex;
-                }
-                value = string.substr(startIndex, endIndex - startIndex);
-                startIndex = ++index + 1;
-                for (auto& c : header) c = std::tolower(c);
-                m_Impl->headers.insert({ std::move(header), std::move(value) });
-                state = ParsingState::Header;
-            }
-            ++index;
-        }
 
         return true;
     }

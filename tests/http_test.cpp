@@ -142,16 +142,27 @@ TEST_CASE("Does not parse an incorrect header.") {
 TEST_CASE("Does not count trailing whitespace for header values.") {
     http::Request http;
 
-    http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html \r\n");
+    CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html \r\n\r\n"));
     CHECK(http.header("Content-Type") == "text/html");
+
+    CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type:\r\n\r\n"));
+    CHECK(http.header("Content-Type") == "");
+
+    CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type:  \r\n\r\n"));
+    CHECK(http.header("Content-Type") == "");
+
+    CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type:\t \r\n\r\n"));
+    CHECK(http.header("Content-Type") == "");
 }
 
 TEST_CASE("Header names are case insensitive.") {
     http::Request http;
-    http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html\r\n");
+
+    http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html\r\n\r\n");
     CHECK(http.hasHeader("content-type"));
     CHECK(http.hasHeader("CONTENT-TYPE"));
-    http.parseFromString("GET / HTTP/1.1\r\ncontent-type: text/html\r\n");
+
+    http.parseFromString("GET / HTTP/1.1\r\ncontent-type: text/html\r\n\r\n");
     CHECK(http.hasHeader("Content-Type"));
     CHECK(http.hasHeader("CONTENT-TYPE"));
 }
