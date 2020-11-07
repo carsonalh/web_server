@@ -119,13 +119,13 @@ TEST_CASE("Is able to parse a header.") {
 
     CHECK_FALSE(http.hasHeader("Non-Existant"));
 
-    CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/plain\r\n"));
+    CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/plain\r\n\r\n"));
     CHECK(http.hasHeader("Content-Type"));
     CHECK(http.header("Content-Type") == "text/plain");
 
     CHECK_FALSE(http.hasHeader("User-Agent"));
 
-    CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type:text/plain\r\n"));
+    CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type:text/plain\r\n\r\n"));
     CHECK(http.hasHeader("Content-Type"));
     CHECK(http.header("Content-Type") == "text/plain");
 }
@@ -190,6 +190,21 @@ TEST_CASE("Identifies when requests do not have a body.") {
 
     CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type:text/html\r\n\r\n"));
     CHECK_FALSE(http.hasBody());
+}
+
+TEST_CASE("Returns false when the header block is not followed by the CRLF sequence.") {
+    http::Request http;
+
+    CHECK_FALSE(http.parseFromString("GET / HTTP/1.1\r\nUser-Agent: X\r\n"));
+
+    CHECK_FALSE(http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html\r\n<h1>this is my title</h1>\r\n"));
+    CHECK_FALSE(http.hasBody());
+
+    CHECK_FALSE(http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html\r\n<h1>this is my title</h1>"));
+    CHECK_FALSE(http.hasBody());
+
+    CHECK_FALSE(http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html\r\n\r"));
+    CHECK_FALSE(http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html\rn\rn"));
 }
 
 #include "./catch_main.hpp"

@@ -2,6 +2,7 @@
 #include "web/text.hpp"
 
 #include <string>
+#include <cstring>
 #include <string_view>
 #include <unordered_map>
 #include <memory>
@@ -53,6 +54,21 @@ namespace http {
          *      part of the request.
          */
         int parseHttpHeaders(const std::string& string, int offset);
+
+        /**
+         * Parses the body of a HTTP request, taking in the offset at which the
+         * body should start relative to the given string of the whole request.
+         * @returns
+         *      The character at the end of the body if successful (which
+         *      should be equal to string.size()), or a value less than zero if
+         *      unsuccessful.
+         */
+        int parseHttpBody(const std::string& string, int offset);
+
+        /**
+         * Clears all the data from the implementation struct.
+         */
+        void clear();
 
     public:
         std::string             method;
@@ -178,52 +194,72 @@ namespace http {
 
         std::string header, value;
 
-        headers.clear();
-
-        bool noValue = false;
-        bool lastIterationWasReturn = false;
+        // if the first character of the header block is a CR, then there are
+        // no headers!
+        if (string[index] == '\r') {
+            return index;
+        }
 
         while (index < string.size()) {
-            if (string[index] == ':') {
-                header = string.substr(startIndex, index - startIndex);
-                for (auto c : header)
-                    if (text::HTTP_HEADER_SEPARATORS.contains(c))
+            if (string[index] == '\r') {
+                if (startIndex == index) {
+                    // we're at the end of the header sequence
+                    // double check the next two chars are CRLF sequence, if not, that's an error
+                    auto CRLF = "\r\n";
+                    if (index + std::strlen(CRLF) > string.size()) {
                         return -1;
-
-                ++index;
-
-                while (index < string.size() && string[index] == ' ') ++index;
-                if (index < string.size() && string[index] == '\r') {
-                    noValue = true;
-                    startIndex = --index;
-                }
-                else {
-                    startIndex = index;
-                }
-                lastIterationWasReturn = false;
-            }
-            else if (string[index] == '\r') {
-                if (lastIterationWasReturn) {
-                    break;
-                }
-                lastIterationWasReturn = true;
-                auto endIndex = index;
-                if (!noValue) {
-                    while (std::isspace(string[endIndex - 1])) {
-                        --endIndex;
                     }
-                    value = string.substr(startIndex, endIndex - startIndex);
+                    else if (std::strncmp(string.data() + index, CRLF, std::strlen(CRLF)) != 0) {
+                        return -1;
+                    }
+                    // if they are, all good to return true
+                    return index;
                 }
-                else {
-                    value = "";
+
+                // parse this current header
+                int colonIndex = -1;
+                for (int i = index - 1; i >= startIndex; --i) {
+                    if (string[i] == ':') {
+                        colonIndex = i;
+                        break;
+                    }
                 }
-                startIndex = ++index + 1;
-                for (auto& c : header) c = std::tolower(c);
+                if (colonIndex == -1) {
+                    return -1;
+                }
+                // validate the header
+                header = string.substr(startIndex, colonIndex - startIndex);
+                for (auto& c : header) {
+                    if (text::HTTP_HEADER_SEPARATORS.contains(c)) {
+                        return -1;
+                    }
+                    c = std::tolower(c);
+                }
+
+                // parse the current value
+                int valueStart = colonIndex + 1;
+                int valueEnd = index;
+                while (std::isspace(string[valueStart])) ++valueStart;
+                while (valueEnd > valueStart && std::isspace(string[valueEnd - 1])) --valueEnd;
+                value = string.substr(valueStart, valueEnd - valueStart);
+
+                // header and value aren't read from -- only written to which
+                // won't occur until the next iteration; it is safe to move
+                // them
                 headers.insert({ std::move(header), std::move(value) });
-                noValue = false;
-            }
-            else {
-                lastIterationWasReturn = false;
+
+                // check if it is a double CRLF sequence (if it is, end)
+                //      make sure it is at least a single CRLF sequence
+                auto CRLF = "\r\n";
+                if (index + 1 >= string.size()) {
+                    return -1;
+                }
+                else if (std::strncmp(string.data() + index, CRLF, std::strlen(CRLF)) != 0) {
+                    return -1;
+                }
+
+                // move past the CRLF sequence for the next header (or the end)
+                startIndex = ++index + 1;
             }
             ++index;
         }
@@ -231,43 +267,76 @@ namespace http {
         return index;
     }
 
+    int Request::Impl::parseHttpBody(const std::string& string, int offset)
+    {
+        auto CRLF = "\r\n";
+        auto index = offset;
+
+        if (index >= string.size()) {
+            return -1;
+        }
+
+        if (index + std::strlen(CRLF) < string.size()) {
+            // Advancing the CRLF sequence, but is not checking if it is
+            // correct, because we know that is handled when the headers are
+            // parsed; see ::http::Request::Impl::parseHttpHeaders.
+            index += std::strlen(CRLF);
+
+            body = string.substr(index);
+        }
+        else {
+            body = "";
+        }
+
+        index += body.size();
+
+        return index;
+    }
+
+    void Request::Impl::clear()
+    {
+        method.clear();
+        uri.clear();
+        headers.clear();
+        body.clear();
+        httpVersionMajor = 0;
+        httpVersionMinor = 0;
+    }
+
     bool Request::parseFromString(std::string string)
     {
+        m_Impl->clear();
+
+        auto done = [this]() { m_Impl->clear(); return false; };
+
         int end = 0;
 
         if ((end = m_Impl->parseHttpMethod(string, 0)) < 0)
-            return false;
+            return done();
 
         ++end; // Advance past the trailing space
 
         if ((end = m_Impl->parseHttpUri(string, end)) < 0)
-            return false;
+            return done();
 
         ++end; // Advance past the trailing space
 
         if ((end = m_Impl->parseHttpVersion(string, end)) < 0)
-            return false;
+            return done();
 
         // parseHttpVersion would have already gone past the CRLF diretly after
         // it
         // "end" should now be at the first character of the headers
 
         if ((end = m_Impl->parseHttpHeaders(string, end)) < 0)
-            return false;
+            return done();
 
-        {
-            auto CRLF = "\r\n";
+        // At this point, end should be on the CRLF before the body, but
+        // parseHttpHeaders has already verified that it is indeed a CRLF,
+        // because it needs the double CRLF sequence to terminate.
 
-            if (end + std::strlen(CRLF) < string.size()) {
-                // TODO: make sure there is a CRLF inbetween the headers and the
-                // body (and parse the body)
-                end += std::strlen(CRLF); // advancing the CRLF sequence, but is not checking if it is correct
-                m_Impl->body = string.substr(end);
-            }
-            else {
-                m_Impl->body = "";
-            }
-        }
+        if ((end = m_Impl->parseHttpBody(string, end)) < 0)
+            return done();
 
         return true;
     }
