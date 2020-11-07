@@ -218,7 +218,7 @@ namespace http {
 
                 // parse this current header
                 int colonIndex = -1;
-                for (int i = index - 1; i >= startIndex; --i) {
+                for (int i = startIndex; i < index; ++i) {
                     if (string[i] == ':') {
                         colonIndex = i;
                         break;

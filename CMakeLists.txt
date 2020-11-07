@@ -11,6 +11,7 @@ add_library (web_server STATIC
         include/web/uri.hpp
         src/character_set.cpp
         src/http_request.cpp
+        src/http_response.cpp
         src/uri.cpp
 )
 target_include_directories (web_server PUBLIC include)

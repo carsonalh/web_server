@@ -44,5 +44,26 @@ namespace http {
 
     };
 
+    class Response
+    {
+    public:
+        Response();
+        ~Response();
+
+        std::string constructString() const;
+        void clear();
+        void setStatusCode(int code);
+        void setReasonPhrase(const std::string& phrase);
+        void setHeader(const std::string& headerName, const std::string& headerValue);
+        void setBody(const std::string& body);
+        void setVersionMajor(int versionMajor);
+        void setVersionMinor(int versionMinor);
+
+    private:
+        struct Impl;
+        std::unique_ptr<Impl> m_Impl;
+
+    };
+
 }
 
