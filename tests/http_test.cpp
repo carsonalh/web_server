@@ -207,5 +207,15 @@ TEST_CASE("Returns false when the header block is not followed by the CRLF seque
     CHECK_FALSE(http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html\rn\rn"));
 }
 
+TEST_CASE("Parses non-text characters in the body.") {
+    http::Request http;
+
+    CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html\r\n\r\n<h1>Body \xf0\x9f\x8d\x95</h1>\r\n"));
+    CHECK(http.body() == "<h1>Body \xf0\x9f\x8d\x95</h1>\r\n");
+
+    CHECK(http.parseFromString("GET / HTTP/1.1\r\nContent-Type: text/html\r\n\r\n<h1>Body \0</h1>\r\n"));
+    CHECK(http.body() == "<h1>Body \0</h1>\r\n");
+}
+
 #include "./catch_main.hpp"
 

@@ -303,7 +303,7 @@ namespace http {
         httpVersionMinor = 0;
     }
 
-    bool Request::parseFromString(std::string string)
+    bool Request::parseFromString(const std::string& string)
     {
         m_Impl->clear();
 
@@ -341,12 +341,12 @@ namespace http {
         return true;
     }
 
-    std::string Request::method() const
+    const std::string& Request::method() const
     {
         return m_Impl->method;
     }
 
-    std::string Request::uri() const
+    const std::string& Request::uri() const
     {
         return m_Impl->uri;
     }
@@ -368,7 +368,7 @@ namespace http {
         return m_Impl->headers.find(lowerCopy) != m_Impl->headers.end();
     }
 
-    std::string Request::header(const std::string& headerName) const
+    const std::string& Request::header(const std::string& headerName) const
     {
         std::string lowerCopy = headerName;
         for (auto& c : lowerCopy) c = std::tolower(c);
@@ -380,7 +380,7 @@ namespace http {
         return !m_Impl->body.empty();
     }
 
-    std::string Request::body() const
+    const std::string& Request::body() const
     {
         return m_Impl->body;
     }

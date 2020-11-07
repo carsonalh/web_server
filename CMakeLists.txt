@@ -15,6 +15,12 @@ add_library (web_server STATIC
 )
 target_include_directories (web_server PUBLIC include)
 
+if (WIN32)
+    target_compile_options (web_server PRIVATE /W4)
+else ()
+    target_compile_options (web_server PRIVATE -Werror -Wall)
+endif ()
+
 add_subdirectory (third_party/Catch2)
 
 enable_testing ()

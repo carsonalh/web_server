@@ -20,23 +20,23 @@ namespace http {
          * Parses from a stringified version of the HTTP request, storing the
          * data in the object's internal state.
          */
-        bool parseFromString(std::string string);
+        bool parseFromString(const std::string& string);
 
         int httpVersionMajor() const;
 
         int httpVersionMinor() const;
 
-        std::string method() const;
+        const std::string& method() const;
 
-        std::string uri() const;
+        const std::string& uri() const;
 
         bool hasHeader(const std::string& headerName) const;
 
-        std::string header(const std::string& headerName) const;
+        const std::string& header(const std::string& headerName) const;
 
         bool hasBody() const;
 
-        std::string body() const;
+        const std::string& body() const;
 
     private:
         struct Impl;

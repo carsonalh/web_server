@@ -215,9 +215,9 @@ namespace uri {
             std::regex badIpv6HostPattern{ "(\\[.*\\])" };
 
             if (std::regex_search(string, searchResults, ipv6HostPattern)) {
-                auto& ipv6RawHost = searchResults[1].str();
+                auto ipv6RawHost = searchResults[1].str();
+                auto innerHost = ipv6RawHost.substr(1, ipv6RawHost.size() - 2);
 
-                auto& innerHost = ipv6RawHost.substr(1, ipv6RawHost.size() - 2);
                 if (isIpv6String(innerHost)) {
                     host = innerHost;
                 }
