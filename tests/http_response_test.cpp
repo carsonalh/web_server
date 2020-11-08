@@ -65,5 +65,27 @@ TEST_CASE("Can construct http responses with different given versions.") {
     CHECK(response.constructString() == "HTTP/1.2 400 Bad Request\r\nContent-Length: 5\r\nContent-Type: text/plain\r\n\r\nerror");
 }
 
+TEST_CASE("Puts headers in the same order that they were added.") {
+    http::Response response;
+
+    response.clear();
+    response.setVersionMajor(1);
+    response.setVersionMinor(2);
+    response.setStatusCode(400);
+    response.setReasonPhrase("Bad Request");
+    response.setHeader("Content-Length", "5");
+    response.setHeader("Content-Type", "text/plain");
+    response.setBody("error");
+    CHECK(response.constructString() == "HTTP/1.2 400 Bad Request\r\nContent-Length: 5\r\nContent-Type: text/plain\r\n\r\nerror");
+
+    response.clear();
+    response.setStatusCode(200);
+    response.setReasonPhrase("OK");
+    response.setHeader("Content-Type", "text/plain");
+    response.setHeader("Content-Length", "7");
+    response.setBody("hello\r\n");
+    CHECK(response.constructString() == "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 7\r\n\r\nhello\r\n");
+}
+
 #include "./catch_main.hpp"
 
