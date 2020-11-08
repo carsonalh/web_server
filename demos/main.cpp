@@ -1,19 +1,11 @@
-#include <winsock2.h>
-#include <ws2tcpip.h>
-
 #include <web/http.hpp>
 #include <web/uri.hpp>
+#include <web/main.hpp>
 
-#include <iostream>
 #include <string>
 #include <optional>
 #include <sstream>
-
-#include <cstring>
 #include <cstdio>
-
-#define DEFAULT_PORT "8080"
-#define BACKLOG 24
 
 namespace utils {
     std::optional<std::string> readFile(const std::string& fileName)
@@ -34,15 +26,7 @@ namespace utils {
     }
 }
 
-class IServer
-{
-public:
-    virtual ~IServer() = default;
-
-    virtual std::string processRequest(const std::string& incoming) = 0;
-};
-
-class HttpServer : public IServer
+class HttpServer : public web::IServer
 {
 public:
     std::string processRequest(const std::string& incoming) override
@@ -86,71 +70,28 @@ protected:
 
 };
 
-int main() 
+class HttpApplication : public web::Application
 {
-    WSADATA d;
-
-    if (WSAStartup(MAKEWORD(2, 2), &d)) {
-        std::cerr << "failde to initialise winsock.\n";
-        return 1;
-    }
-
-    SOCKET receiveSocket = NULL;
-
-    struct addrinfo hints;
-    struct addrinfo* bindAddress;
-
-    std::memset(&hints, 0, sizeof hints);
-
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;
-
-    getaddrinfo(nullptr, DEFAULT_PORT, &hints, &bindAddress);
-
-    receiveSocket = socket(
-            bindAddress->ai_family,
-            bindAddress->ai_socktype,
-            bindAddress->ai_protocol);
-
-    if (receiveSocket == INVALID_SOCKET) {
-        std::cerr << "failed to create a valid socket.\n";
-        return 1;
-    }
-
-    if (bind(receiveSocket, bindAddress->ai_addr, bindAddress->ai_addrlen)) {
-        std::cerr << "faild to bind the created socket.\n";
-        return 1;
-    }
-
-    if (listen(receiveSocket, BACKLOG) < 0) {
-        std::cerr << "failed to get the socket listening.\n";
-        return 1;
-    }
-
+public:
+    HttpApplication()
+        : m_Server{}
     {
-        IServer& server = HttpServer();
-        struct sockaddr_storage clientAddress;
-        socklen_t clientSize = sizeof clientAddress;
-        while (true) {
-            SOCKET clientSocket = accept(receiveSocket, (struct sockaddr*)&clientAddress, &clientSize);
-            if (clientSocket == INVALID_SOCKET) {
-                std::cerr << "the socket from accept() was invalid.\n";
-                WSACleanup();
-                return 1;
-            }
-            std::ostringstream incomingMessage;
-            char receiveBuffer[1024];
-            int len = recv(clientSocket, receiveBuffer, sizeof receiveBuffer, 0);
-            if (len > 0) {
-                incomingMessage.write(receiveBuffer, len * sizeof receiveBuffer[0]);
-            }
-            std::string serverInput = incomingMessage.str();
-            std::string serverOutput = server.processRequest(serverInput);
-            int sent = send(clientSocket, serverOutput.c_str(), serverOutput.size(), 0);
-            std::cout << "sent " << sent << " of " << serverOutput.size() << " bytes\n";
-            closesocket(clientSocket);
-        }
     }
+
+    ~HttpApplication() = default;
+
+    web::IServer& server() override
+    {
+        return m_Server;
+    }
+
+protected:
+    HttpServer m_Server;
+};
+
+int main(int argc, const char** argv)
+{
+    HttpApplication app;
+    return web::runApplication(app, argc, argv);
 }
 

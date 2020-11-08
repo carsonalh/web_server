@@ -7,11 +7,13 @@ project (web_server_library VERSION 0.0.0 LANGUAGES C CXX)
 
 add_library (web_server STATIC
         include/web/http.hpp
+        include/web/main.hpp
         include/web/text.hpp
         include/web/uri.hpp
         src/character_set.cpp
         src/http_request.cpp
         src/http_response.cpp
+        src/main.cpp
         src/uri.cpp
 )
 target_include_directories (web_server PUBLIC include)
