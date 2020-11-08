@@ -44,19 +44,33 @@ namespace http {
 
     };
 
+    /**
+     * A HTTP response object that is responsible for constructing HTTP
+     * responses as strings. This implements the standard defined in (the RFC
+     * standard)[https://tools.ietf.org/html/rfc2616].
+     */
     class Response
     {
     public:
         Response();
         ~Response();
 
+        /** Constructs the response string with the given data.  */
         std::string constructString() const;
+
+        /** Clears the internal state. */
         void clear();
+
         void setStatusCode(int code);
+
         void setReasonPhrase(const std::string& phrase);
+
         void setHeader(const std::string& headerName, const std::string& headerValue);
+
         void setBody(const std::string& body);
+
         void setVersionMajor(int versionMajor);
+
         void setVersionMinor(int versionMinor);
 
     private:

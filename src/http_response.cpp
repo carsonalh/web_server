@@ -1,7 +1,7 @@
 #include "web/http.hpp"
 
+#include <vector>
 #include <sstream>
-#include <map>
 
 namespace http {
 
@@ -13,9 +13,9 @@ namespace http {
     public:
         std::string         reasonPhrase;
         int                 statusCode = 0;
-        std::map<
+        std::vector<std::pair<
             std::string,
-            std::string>    headers;
+            std::string>>   headers;
         std::string         body;
         int                 versionMajor = 1;
         int                 versionMinor = 1;
@@ -37,9 +37,7 @@ namespace http {
     {
     }
 
-    Response::~Response()
-    {
-    }
+    Response::~Response() = default;
 
     std::string Response::constructString() const
     {
@@ -73,7 +71,7 @@ namespace http {
 
     void Response::setHeader(const std::string& headerName, const std::string& headerValue)
     {
-        m_Impl->headers.insert({ headerName, headerValue });
+        m_Impl->headers.push_back({ headerName, headerValue });
     }
 
     void Response::setBody(const std::string& body)
